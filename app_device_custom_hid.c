@@ -24,7 +24,7 @@ please contact mla_licensing@microchip.com
 #include "system.h"
 
 #include "os.h"
-#include "lcd.h"
+//#include "lcd.h"
 //#include "rtcc.h"
 //#include "display.h"
 //#include "buck.h"
@@ -187,10 +187,10 @@ static void _fill_buffer_get_status(void)
     ToSendDataBuffer[8] = (uint8_t) (os.db_value >> 8);
     ToSendDataBuffer[9] = os.s_value;
     ToSendDataBuffer[10] = os.s_fraction;
-    ToSendDataBuffer[11] = lcd_get_brightness();
-    ToSendDataBuffer[12] = lcd_get_contrast();
-    ToSendDataBuffer[13] = lcd_get_saved_brightness();
-    ToSendDataBuffer[14] = lcd_get_saved_contrast();
+    ////ToSendDataBuffer[11] = lcd_get_brightness();
+    //ToSendDataBuffer[12] = lcd_get_contrast();
+    ////ToSendDataBuffer[13] = lcd_get_saved_brightness();
+    ////ToSendDataBuffer[14] = lcd_get_saved_contrast();
     //Calibration. 3 bytes each
     for(i=0; i<14; ++i)
     {
@@ -206,10 +206,10 @@ static void _parse_command_short(uint8_t cmd)
     switch(cmd)
     {
         case 0x30:
-            lcd_save_brightness_contrast();
+            //lcd_save_brightness_contrast();
             break;
         case 0x31:
-            lcd_reset_brightness_contrast();
+            //lcd_reset_brightness_contrast();
             break;
     }
 }
@@ -220,11 +220,11 @@ static void _parse_command_long(uint8_t cmd, uint8_t data)
     {
         //Display brightness
         case 0x40:
-            lcd_set_brightness(data);
+            //lcd_set_brightness(data);
             break;
         //Display contrast
         case 0x41: 
-            lcd_set_contrast(data);
+            //lcd_set_contrast(data);
             break;
     }    
 }

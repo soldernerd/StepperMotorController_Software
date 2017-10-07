@@ -37,8 +37,11 @@ uint8_t i2c_eeprom_readByte(uint16_t address);
 void i2c_eeprom_write(uint16_t address, uint8_t *data, uint8_t length);
 void i2c_eeprom_read(uint16_t address, uint8_t *data, uint8_t length);
 
-void i2c_adc_start(i2cAdcResolution_t resolution, i2cAdcGain_t gain);
-int16_t i2c_adc_read(void);
+void i2c_display_init(void);
+void i2c_display_send_init_sequence(void);
+void i2c_display_cursor(uint8_t line, uint8_t position);
+void i2c_display_write(char *data);
+void i2c_display_write_fixed(char *data, uint8_t length);
 
 #endif	/* I2C_H */
 

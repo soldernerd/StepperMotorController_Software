@@ -4,7 +4,6 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
-      <itemPath>LCD.h</itemPath>
       <itemPath>app_device_custom_hid.h</itemPath>
       <itemPath>app_device_msd.h</itemPath>
       <itemPath>fileio.h</itemPath>
@@ -46,7 +45,6 @@
       <itemPath>usb_events.c</itemPath>
       <itemPath>main.c</itemPath>
       <itemPath>os.c</itemPath>
-      <itemPath>lcd.c</itemPath>
       <itemPath>i2c.c</itemPath>
       <itemPath>display.c</itemPath>
     </logicalFolder>

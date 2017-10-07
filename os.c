@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <xc.h>
 #include "os.h"
-#include "lcd.h"
+//#include "lcd.h"
 #include "i2c.h"
 //#include "adc.h"
 
@@ -12,6 +12,63 @@
 #define TIMER0_LOAD_LOW_48MHZ 0xB0
 #define TIMER0_LOAD_SHORT_HIGH_48MHZ 0xFA
 #define TIMER0_LOAD_SHORT_LOW_48MHZ 0x24
+
+static void _system_pin_setup(void)
+{
+    TEMPERATURE_TRIS = PIN_INPUT;
+    TEMPERATURE_ANCON = PIN_ANALOG;
+
+    BUZZER_TRIS = PIN_OUTPUT;
+    BUZZER_PIN = 0;
+
+    FAN_TRIS = PIN_OUTPUT;
+    FAN_PIN = 0;
+
+    DISPLAY_RESET_TRIS = PIN_OUTPUT;
+    DISPLAY_RESET_PIN = 0;
+
+    DISPLAY_BACKLIGHT_TRIS = PIN_OUTPUT;
+    DISPLAY_BACKLIGHT_PIN = 0;
+    PPSUnLock();
+    DISPLAY_BACKLIGHT_PPS = PPS_FUNCTION_CCP2_OUTPUT;
+    PPSLock();
+
+    I2C_SDA_TRIS = PIN_INPUT;
+    I2C_SCL_TRIS = PIN_INPUT;
+
+    MOTOR_ENABLE_TRIS = PIN_OUTPUT;
+    MOTOR_ENABLE_PIN = 1;
+
+    MOTOR_DIRECTION_TRIS = PIN_OUTPUT;
+    MOTOR_DIRECTION_PIN = 0;
+
+    MOTOR_STEP_TRIS = PIN_OUTPUT;
+    MOTOR_STEP_PIN = 0;
+    PPSUnLock();
+    MOTOR_STEP_PPS = PPS_FUNCTION_CCP1_OUTPUT;
+    PPSLock();
+
+    MOTOR_ERROR_TRIS = PIN_INPUT;
+    MOTOR_ERROR_ANCON = PIN_DIGITAL;
+
+    ENCODER1_A_TRIS = PIN_INPUT;
+    ENCODER1_A_ANCON = PIN_DIGITAL;
+
+    ENCODER1_B_TRIS = PIN_INPUT;
+    //ENCODER1_B_ANCON = PIN_DIGITAL;
+
+    ENCODER1_PB_TRIS = PIN_INPUT;
+    //ENCODER1_PB_ANCON = PIN_DIGITAL;
+
+    ENCODER2_A_TRIS = PIN_INPUT;
+    ENCODER2_A_ANCON = PIN_DIGITAL;
+
+    ENCODER2_B_TRIS = PIN_INPUT;
+    ENCODER2_B_ANCON = PIN_DIGITAL;
+
+    ENCODER2_PB_TRIS = PIN_INPUT;
+    ENCODER2_PB_ANCON = PIN_DIGITAL;
+}
 
 void tmr_isr(void)
 { 
@@ -68,18 +125,8 @@ static void _system_timer0_init(void)
     os.timeSlot = 0;
 }
 
-static void display_init(void)
+static void _backlight_init(void)
 {
-    //Setup backlight
-    //pin as output
-    TRISCbits.TRISC7 = 0;
-    PORTCbits.RC7 = 0;
-    
-    //Assign via peripheral pin select (PPS)
-    PPSUnLock();
-    RPOR18 = 18;
-    PPSLock();
-    
     //Initialize timer 4
     //Use timer2 for CCP1 module, timer 4 for CCP2 module
     TCLKCONbits.T3CCP2 = 0b0;
@@ -113,8 +160,9 @@ static void init_buzzer(void)
     PORTAbits.RA1 = 0;
 }
 
-static void stepper_init(void)
+static void _stepper_init(void)
 {
+    /*
     //RB as input (error)
     TRISBbits.TRISB0 = 1;
     
@@ -134,6 +182,7 @@ static void stepper_init(void)
     PPSUnLock();
     RPOR4 = 14;
     PPSLock();
+    */
     
     //Initialize timer 2
     //Use timer2 for CCP1 module
@@ -147,8 +196,8 @@ static void stepper_init(void)
     //T2CONbits.T2CKPS0 = 0;
     PR2 = 100;
     
-    //Enable timer 2
-    T2CONbits.TMR2ON = 1;
+    //Disable timer 2
+    T2CONbits.TMR2ON = 0;
     
     //Single output mode
     CCP1CONbits.P1M = 0b00;
@@ -162,20 +211,20 @@ static void stepper_init(void)
 
 void system_init(void)
 {
-    init_buzzer();
-    display_init();
-    stepper_init();
-    
-    //Set up timer0 for timeSlots
-    _system_timer0_init();
+    //Configure all pins as inputs/outputs analog/digital as needed
+    _system_pin_setup();
     
     //Set up I2C
-    //i2c_init();
+    i2c_init();
+    
+    //Initialize display and show startup screen
+    i2c_display_init();
+    _backlight_init();
+    
+    //Configure timer2 and CCCP1 module to control stepper motor
+    _stepper_init();
 
-    //Set up LCD and display startup screen
-    //lcd_setup();
-    //lcd_init_4bit();
-    //lcd_refresh_all(); 
-
+    //Set up timer0 for timeSlots
+    _system_timer0_init();
 }
 

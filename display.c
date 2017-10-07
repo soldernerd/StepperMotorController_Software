@@ -4,12 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "display.h"
-#include "lcd.h"
+//#include "lcd.h"
 #include "os.h"
 
 static void _display_clear(void);
 static void _display_itoa(int16_t value, uint8_t decimals, char *text);
 
+/*
 static void _display_clear(void)
 {
     uint8_t row;
@@ -22,6 +23,7 @@ static void _display_clear(void)
         }
     }
 }
+*/
 
 static void _display_itoa(int16_t value, uint8_t decimals, char *text)
 {
@@ -91,6 +93,7 @@ static void _display_itoa(int16_t value, uint8_t decimals, char *text)
     text[pos+1] = 0;
 }
 
+/*
 void display_prepare()
 {
     char buffer[10];
@@ -99,14 +102,6 @@ void display_prepare()
     int16_t threshold;
     _display_clear();
     //Line 1
-    
-    //Write ADC value
-    /*
-    _display_itoa((int16_t) (os.adc_value>>1), 3, &buffer[0]);
-    cntr = 0;
-    while(buffer[cntr])
-        lcd_content[0][cntr] = buffer[cntr++];
-     * */
     
     if(os.db_value==-32768)
     {
@@ -236,4 +231,4 @@ void display_prepare()
         }
     }
 }
-
+*/

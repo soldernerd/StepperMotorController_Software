@@ -23,7 +23,7 @@
 
 //User defined code
 #include "os.h"
-#include "lcd.h"
+//#include "lcd.h"
 #include "i2c.h"
 #include "display.h"
 
@@ -81,21 +81,25 @@ MAIN_RETURN main(void)
                     ++stepper_count;
                     if(stepper_count==10)
                     {
-                        STEPPER_DIRECTION_PIN = 0;
-                        STEPPER_ENABLE_PIN = 0;//enable
+                        MOTOR_DIRECTION_PIN = 0;
+                        MOTOR_ENABLE_PIN = 0;//enable
+                        T2CONbits.TMR2ON = 1;
                     }
                     if(stepper_count==50)
                     {
-                        STEPPER_ENABLE_PIN = 1;//disable
+                        MOTOR_ENABLE_PIN = 1;//disable
+                        T2CONbits.TMR2ON = 0;
                     }
                     if(stepper_count==60)
                     {
-                        STEPPER_DIRECTION_PIN = 1;
-                        STEPPER_ENABLE_PIN = 0;//enable
+                        MOTOR_DIRECTION_PIN = 1;
+                        MOTOR_ENABLE_PIN = 0;//enable
+                        T2CONbits.TMR2ON = 1;
                     }
                     if(stepper_count==100)
                     {
-                        STEPPER_ENABLE_PIN = 1;//disable
+                        MOTOR_ENABLE_PIN = 1;//disable
+                        T2CONbits.TMR2ON = 0;
                         stepper_count = 0;
                     }
                     
