@@ -185,8 +185,9 @@ static void _stepper_init(void)
     */
     
     //Initialize timer 2
-    //Use timer2 for CCP1 module
-    TCLKCONbits.T3CCP1 = 0;
+    //Use timer2 for CCP1 module, timer 4 for CCP2 module
+    TCLKCONbits.T3CCP2 = 0b0;
+    TCLKCONbits.T3CCP1 = 0b1;
     
     //Post scaler = 16
     T2CONbits.T2OUTPS = 0b1111;
