@@ -2,9 +2,8 @@
 #include <stdint.h>
 #include <xc.h>
 #include "os.h"
-//#include "lcd.h"
+#include "display.h"
 #include "i2c.h"
-//#include "adc.h"
 
 
 //12ms for normal load, 1ms for short load
@@ -220,6 +219,7 @@ void system_init(void)
     
     //Initialize display and show startup screen
     i2c_display_init();
+    display_update();
     _backlight_init();
     
     //Configure timer2 and CCCP1 module to control stepper motor

@@ -82,8 +82,11 @@ MAIN_RETURN main(void)
                     if(stepper_count==10)
                     {
                         MOTOR_DIRECTION_PIN = 0;
-                        MOTOR_ENABLE_PIN = 0;//enable
+                        //MOTOR_ENABLE_PIN = 0;//enable
                         T2CONbits.TMR2ON = 1;
+                        os.displayState = DISPLAY_STATE_MANUAL_NORMAL;
+                        display_prepare();
+                        display_update();
                     }
                     if(stepper_count==50)
                     {
@@ -93,7 +96,7 @@ MAIN_RETURN main(void)
                     if(stepper_count==60)
                     {
                         MOTOR_DIRECTION_PIN = 1;
-                        MOTOR_ENABLE_PIN = 0;//enable
+                        //MOTOR_ENABLE_PIN = 0;//enable
                         T2CONbits.TMR2ON = 1;
                     }
                     if(stepper_count==100)
@@ -102,7 +105,6 @@ MAIN_RETURN main(void)
                         T2CONbits.TMR2ON = 0;
                         stepper_count = 0;
                     }
-                    
                     break;
                     
                 case 8:
@@ -114,67 +116,6 @@ MAIN_RETURN main(void)
     }//end while(1)
 }//end main
 
-
-
-
-static void _calculate_adc_sum(void)
-{
-    uint8_t cntr;
-    os.adc_sum = 0;
-    for(cntr=0;cntr<16;++cntr)
-    {
-        os.adc_sum += os.adc_values[cntr];
-    }
-}
-
-static void _calculate_db_value(void)
-{
-    int16_t cntr;
-    int16_t returnValue;
-    int32_t tmp;
-   
-    if (os.adc_sum < os.calibration[0])
-    {
-        //Indicate an unterflow
-        os.db_value = -32768;
-        return;
-    }
-    if (os.adc_sum > os.calibration[13])
-    {
-        //Indicate an overflow
-        os.db_value =  32767;
-        return;
-    }
-    for(cntr=0; cntr<13; ++cntr)
-    {
-        if(os.adc_sum<os.calibration[cntr+1])
-        {
-            returnValue = -12000;
-            returnValue += (cntr * 1000);
-            tmp = 1000 * (os.adc_sum - os.calibration[cntr]);
-            tmp /=  (os.calibration[cntr + 1] - os.calibration[cntr]);
-            returnValue += (int16_t) tmp;
-            os.db_value = returnValue;
-            return;
-        }
-    }
-}
-
-static void _calculate_s_value(void)
-{
-    int16_t tmp;
-    //Calculate full S value
-    tmp = os.db_value + 12749;
-    os.s_value = (uint8_t) (tmp / 600); 
-    //Calculate S fraction
-    tmp = tmp % 600;
-    os.s_fraction = (uint8_t) (tmp / 100);
-    while(os.s_value>9)
-    {
-        --os.s_value;
-        os.s_fraction += 6;
-    }
-};
 
 /*******************************************************************************
  End of File

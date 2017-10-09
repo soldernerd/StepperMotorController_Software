@@ -177,16 +177,16 @@ static void _fill_buffer_get_status(void)
     ToSendDataBuffer[0] = COMMAND_GET_STATUS;
     //Copy entire os struct into buffer
     //memcpy(&ToSendDataBuffer[1], &os, sizeof os);
-    ToSendDataBuffer[1] = (uint8_t) os.adc_values[os.timeSlot&0b00001111]; //LSB
-    ToSendDataBuffer[2] = (uint8_t) (os.adc_values[os.timeSlot&0b00001111] >> 8); //MSB
-    ToSendDataBuffer[3] = (uint8_t) os.adc_sum; //LSB
-    ToSendDataBuffer[4] = (uint8_t) (os.adc_sum >> 8);
-    ToSendDataBuffer[5] = (uint8_t) (os.adc_sum >> 16);
-    ToSendDataBuffer[6] = (uint8_t) (os.adc_sum >> 24); //MSB
-    ToSendDataBuffer[7] = (uint8_t) os.db_value; //LSB
-    ToSendDataBuffer[8] = (uint8_t) (os.db_value >> 8);
-    ToSendDataBuffer[9] = os.s_value;
-    ToSendDataBuffer[10] = os.s_fraction;
+//    ToSendDataBuffer[1] = (uint8_t) os.adc_values[os.timeSlot&0b00001111]; //LSB
+//    ToSendDataBuffer[2] = (uint8_t) (os.adc_values[os.timeSlot&0b00001111] >> 8); //MSB
+//    ToSendDataBuffer[3] = (uint8_t) os.adc_sum; //LSB
+//    ToSendDataBuffer[4] = (uint8_t) (os.adc_sum >> 8);
+//    ToSendDataBuffer[5] = (uint8_t) (os.adc_sum >> 16);
+//    ToSendDataBuffer[6] = (uint8_t) (os.adc_sum >> 24); //MSB
+//    ToSendDataBuffer[7] = (uint8_t) os.db_value; //LSB
+//    ToSendDataBuffer[8] = (uint8_t) (os.db_value >> 8);
+//    ToSendDataBuffer[9] = os.s_value;
+//    ToSendDataBuffer[10] = os.s_fraction;
     ////ToSendDataBuffer[11] = lcd_get_brightness();
     //ToSendDataBuffer[12] = lcd_get_contrast();
     ////ToSendDataBuffer[13] = lcd_get_saved_brightness();
@@ -194,9 +194,9 @@ static void _fill_buffer_get_status(void)
     //Calibration. 3 bytes each
     for(i=0; i<14; ++i)
     {
-        ToSendDataBuffer[3*i+21] = (uint8_t) (os.calibration[i]);
-        ToSendDataBuffer[3*i+22] = (uint8_t) (os.calibration[i] >> 8);
-        ToSendDataBuffer[3*i+23] = (uint8_t) (os.calibration[i] >> 16);  
+//        ToSendDataBuffer[3*i+21] = (uint8_t) (os.calibration[i]);
+//        ToSendDataBuffer[3*i+22] = (uint8_t) (os.calibration[i] >> 8);
+//        ToSendDataBuffer[3*i+23] = (uint8_t) (os.calibration[i] >> 16);  
     }
 }
 
@@ -242,7 +242,7 @@ static void _parse_command_calibration(uint8_t cmd, uint8_t item, uint8_t dat1, 
     {
         //Calibration
         case 0x60:
-            os.calibration[item] = parameter;
+            //os.calibration[item] = parameter;
             break;
     }  
     //Store changes in RAM

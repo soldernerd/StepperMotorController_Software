@@ -4,26 +4,30 @@
 #include <stdlib.h>
 #include <string.h>
 #include "display.h"
-//#include "lcd.h"
+#include "i2c.h"
 #include "os.h"
+
+#define DISPLAY_STARTUP_0 {'*',' ',' ','S','t','e','p','p','e','r',' ','M','o','t','o','r',' ',' ',' ','*'}
+#define DISPLAY_STARTUP_1 {'*',' ',' ',' ',' ','C','o','n','t','r','o','l','l','e','r',' ',' ',' ',' ','*'}
+#define DISPLAY_STARTUP_2 {'*',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','*'}
+#define DISPLAY_STARTUP_3 {'*',' ',' ','s','o','l','d','e','r','n','e','r','d','.','c','o','m',' ',' ','*'}
+char display_content[4][20] = {DISPLAY_STARTUP_0, DISPLAY_STARTUP_1, DISPLAY_STARTUP_2, DISPLAY_STARTUP_3};
 
 static void _display_clear(void);
 static void _display_itoa(int16_t value, uint8_t decimals, char *text);
 
-/*
 static void _display_clear(void)
 {
     uint8_t row;
     uint8_t col;
-    for(row=0;row<2;++row)
+    for(row=0;row<4;++row)
     {
-        for(col=0;col<16;++col)
+        for(col=0;col<20;++col)
         {
-            lcd_content[row][col] = ' ';
+            display_content[row][col] = ' ';
         }
     }
 }
-*/
 
 static void _display_itoa(int16_t value, uint8_t decimals, char *text)
 {
@@ -93,15 +97,156 @@ static void _display_itoa(int16_t value, uint8_t decimals, char *text)
     text[pos+1] = 0;
 }
 
-/*
+
 void display_prepare()
 {
+    #define DISPLAY_MAIN_0 {'M','a','i','n',' ','M','e','n','u',':',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
+    #define DISPLAY_MAIN_1 {' ','S','e','t','u','p',' ',' ',' ',' ','D','i','v','i','d','e',' ',' ',' ',' '}
+    #define DISPLAY_MAIN_2 {' ','A','r','c',' ',' ',' ',' ',' ',' ','M','a','n','u','a','l',' ',' ',' ',' '}
+    #define DISPLAY_MAIN_3 {' ','G','o','2','Z','e','r','o',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
+    const char dc_main[4][20] = {DISPLAY_MAIN_0, DISPLAY_MAIN_1, DISPLAY_MAIN_2, DISPLAY_MAIN_3};
+    #define DISPLAY_SETUP1_0 {'S','e','t','u','p',':',' ','S','e','t',' ','z','e','r','o',' ','p','o','s','.'}
+    #define DISPLAY_SETUP1_1 {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
+    #define DISPLAY_SETUP1_2 {'S','t','e','p',' ','s','i','z','e',' ','|',' ',' ','C','o','n','f','i','r','m'}
+    #define DISPLAY_SETUP1_3 {' ','1','.','0','0',' ','d','e','g',' ','|',' ',' ','C','a','n','c','e','l',' '}
+    const char dc_setup1[4][20] = {DISPLAY_SETUP1_0, DISPLAY_SETUP1_1, DISPLAY_SETUP1_2, DISPLAY_SETUP1_3};
+    #define DISPLAY_SETUP2_0 {'S','e','t','u','p',':',' ','S','e','t',' ','d','i','r','e','c','t','i','o','n'}
+    #define DISPLAY_SETUP2_1 {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
+    #define DISPLAY_SETUP2_2 {' ','C','o','u','n','t','e','r','C','l','o','c','k','w','i','s','e',' ',' ',' '}
+    #define DISPLAY_SETUP2_3 {' ','C','l','o','c','k','w','i','s','e',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
+    const char dc_setup2[4][20] = {DISPLAY_SETUP2_0, DISPLAY_SETUP2_1, DISPLAY_SETUP2_2, DISPLAY_SETUP2_3};
+    #define DISPLAY_DIVIDE1_0 {'D','i','v','i','d','e',':',' ','S','e','t',' ','d','i','v','i','s','i','o','n'}
+    #define DISPLAY_DIVIDE1_1 {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
+    #define DISPLAY_DIVIDE1_2 {'1','0','0','/','s','t','e','p',' ',' ','|',' ',' ','C','o','n','f','i','r','m'}
+    #define DISPLAY_DIVIDE1_3 {'1','2','3','4',' ',' ',' ',' ',' ',' ','|',' ',' ','C','a','n','c','e','l',' '}
+    const char dc_divide1[4][20] = {DISPLAY_DIVIDE1_0, DISPLAY_DIVIDE1_1, DISPLAY_DIVIDE1_2, DISPLAY_DIVIDE1_3};
+    #define DISPLAY_DIVIDE2_0 {'D','i','v','i','d','e',':',' ','1','2','3','4',',',' ','C','C','W',' ',' ',' '}
+    #define DISPLAY_DIVIDE2_1 {'C','u','r','r','e','n','t',' ','p','o','s',':',' ','1','2','3','4',' ',' ',' '}
+    #define DISPLAY_DIVIDE2_2 {'J','u','m','p',' ','s','i','z','e',':',' ','+','1','2','3',' ',' ',' ',' ',' '}
+    #define DISPLAY_DIVIDE2_3 {'P','r','e','s','s','T','o','J','u','m','p',' ','|',' ','C','a','n','c','e','l'}
+    const char dc_divide2[4][20] = {DISPLAY_DIVIDE2_0, DISPLAY_DIVIDE2_1, DISPLAY_DIVIDE2_2, DISPLAY_DIVIDE2_3};
+    #define DISPLAY_ARC1_0 {'A','r','c',':',' ','S','e','t',' ','a','r','c',' ','s','i','z','e',' ',' ',' '}
+    #define DISPLAY_ARC1_1 {'A','r','c',' ','s','i','z','e',':',' ','1','2','3','.','4','5',' ','d','e','g'}
+    #define DISPLAY_ARC1_2 {'S','t','e','p',' ','s','i','z','e',' ','|',' ',' ','C','o','n','f','i','r','m'}
+    #define DISPLAY_ARC1_3 {'1','0','.','0','0',' ','d','e','g',' ','|',' ',' ','C','a','n','c','e','l',' '}
+    const char dc_arc1[4][20] = {DISPLAY_ARC1_0, DISPLAY_ARC1_1, DISPLAY_ARC1_2, DISPLAY_ARC1_3};
+    #define DISPLAY_ARC2_0 {'A','r','c',':',' ','S','i','z','e','=','1','2','3','.','4','5',' ','d','e','g'}
+    #define DISPLAY_ARC2_1 {'C','u','r','r','e','n','t',' ','p','o','s',':',' ','1','2','3','.','4','5','°'}
+    #define DISPLAY_ARC2_2 {'T','u','r','n',' ','C','C','W',' ','|',' ','S','p','e','e','d',' ',' ',' ',' '}
+    #define DISPLAY_ARC2_3 {'S','t','a','r','t',' ',' ',' ',' ','|',' ','1','2','.','3','4','°','/','s',' '}
+    const char dc_arc2[4][20] = {DISPLAY_ARC2_0, DISPLAY_ARC2_1, DISPLAY_ARC2_2, DISPLAY_ARC2_3};
+    #define DISPLAY_ZERO_0 {'R','e','t','u','r','n',' ','t','o',' ','Z','e','r','o','?',' ',' ',' ',' ',' '}
+    #define DISPLAY_ZERO_1 {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
+    #define DISPLAY_ZERO_2 {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
+    #define DISPLAY_ZERO_3 {' ','Y','e','s',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','N','o',' ',' '}
+    const char dc_zero[4][20] = {DISPLAY_ZERO_0, DISPLAY_ZERO_1, DISPLAY_ZERO_2, DISPLAY_ZERO_3};
+    #define DISPLAY_MANUAL_0 {'M','a','n','u','a','l',' ','M','o','d','e',' ',' ',' ',' ',' ',' ',' ',' ',' '}
+    #define DISPLAY_MANUAL_1 {'C','u','r','r','e','n','t',' ','p','o','s',':',' ','1','2','3','.','4','5','°'}
+    #define DISPLAY_MANUAL_2 {'T','u','r','n',' ','C','C','W',' ','|',' ','S','p','e','e','d',' ',' ',' ',' '}
+    #define DISPLAY_MANUAL_3 {'S','t','a','r','t',' ',' ',' ',' ','|',' ','1','2','.','3','4','°','/','s',' '}
+    const char dc_manual[4][20] = {DISPLAY_MANUAL_0, DISPLAY_MANUAL_1, DISPLAY_MANUAL_2, DISPLAY_MANUAL_3};
+    
+    switch(os.displayState & 0xF0)
+    {
+        
+        case DISPLAY_STATE_MAIN:
+            memcpy(display_content, dc_main, sizeof display_content);
+            switch(os.displayState)
+            {
+                case DISPLAY_STATE_MAIN_SETUP:
+                    display_content[1][0] = '>';
+                    break;
+                case DISPLAY_STATE_MAIN_DIVIDE:
+                    display_content[1][10] = '>';
+                    break;
+                case DISPLAY_STATE_MAIN_ARC:
+                    display_content[2][0] = '>';
+                    break;
+                case DISPLAY_STATE_MAIN_MANUAL:
+                    display_content[2][10] = '>';
+                    break;
+                case DISPLAY_STATE_MAIN_ZERO:
+                    display_content[3][0] = '>';
+                    break;
+            }
+            break;
+            
+        case DISPLAY_STATE_SETUP1:    
+            memcpy(display_content, dc_setup1, sizeof display_content);
+            switch(os.displayState)
+            {
+                case DISPLAY_STATE_SETUP1_CONFIRM:
+                    display_content[2][12] = '>';
+                    break;
+                case DISPLAY_STATE_SETUP1_CANCEL:
+                    display_content[3][12] = '>';
+                    break;
+            }
+            break;
+            
+        case DISPLAY_STATE_SETUP2:    
+            memcpy(display_content, dc_setup2, sizeof display_content);
+            switch(os.displayState)
+            {
+                case DISPLAY_STATE_SETUP2_CCW:
+                    display_content[2][0] = '>';
+                    break;
+                case DISPLAY_STATE_SETUP2_CW:
+                    display_content[3][0] = '>';
+                    break;
+            }
+            break;
+            
+        case DISPLAY_STATE_DIVIDE1:    
+            memcpy(display_content, dc_divide1, sizeof display_content);
+            switch(os.displayState)
+            {
+                case DISPLAY_STATE_DIVIDE1_CONFIRM:
+                    display_content[2][12] = '>';
+                    break;
+                case DISPLAY_STATE_DIVIDE1_CANCEL:
+                    display_content[3][12] = '>';
+                    break;
+            }
+            break;
+            
+        case DISPLAY_STATE_DIVIDE2:    
+            memcpy(display_content, dc_divide2, sizeof display_content);
+            break;
+            
+        case DISPLAY_STATE_ARC1:    
+            memcpy(display_content, dc_arc1, sizeof display_content);
+            switch(os.displayState)
+            {
+                case DISPLAY_STATE_ARC1_CONFIRM:
+                    display_content[2][12] = '>';
+                    break;
+                case DISPLAY_STATE_ARC1_CANCEL:
+                    display_content[3][12] = '>';
+                    break;
+            }
+            break;
+            
+        case DISPLAY_STATE_ARC2:    
+            memcpy(display_content, dc_arc2, sizeof display_content);
+            break;
+            
+        case DISPLAY_STATE_ZERO:    
+            memcpy(display_content, dc_zero, sizeof display_content);
+            break;
+            
+        case DISPLAY_STATE_MANUAL:    
+            memcpy(display_content, dc_manual, sizeof display_content);
+            break;
+    }
+    /*
     char buffer[10];
     uint8_t cntr;
     uint8_t offset;
     int16_t threshold;
     _display_clear();
     //Line 1
+    
     
     if(os.db_value==-32768)
     {
@@ -230,5 +375,16 @@ void display_prepare()
             lcd_content[1][cntr] = LCD_CUSTOM_CHARACTER_BAR1;
         }
     }
+    */
 }
-*/
+
+void display_update(void)
+{
+    uint8_t line;
+    for(line=0; line<4; ++line)
+    {
+        i2c_display_cursor(line, 0);
+        i2c_display_write_fixed(display_content[line], 20);
+    }
+}
+
