@@ -131,16 +131,21 @@ typedef enum
     DISPLAY_STATE_ARC1_CONFIRM = 0x51,
     DISPLAY_STATE_ARC1_CANCEL = 0x52,
     DISPLAY_STATE_ARC2 = 0x60,
-    DISPLAY_STATE_ARC2_NORMAL = 0x61,
+    DISPLAY_STATE_ARC2_CCW = 0x61,
+    DISPLAY_STATE_ARC2_CANCEL = 0x62,
+    DISPLAY_STATE_ARC2_CW = 0x63,
     DISPLAY_STATE_ZERO = 0x70,
     DISPLAY_STATE_ZERO_NORMAL = 0x71,
     DISPLAY_STATE_MANUAL = 0x80,
-    DISPLAY_STATE_MANUAL_NORMAL = 0x81
-    
+    DISPLAY_STATE_MANUAL_CCW = 0x81,
+    DISPLAY_STATE_MANUAL_CANCEL = 0x82,
+    DISPLAY_STATE_MANUAL_CW = 0x83,
+    DISPLAY_STATE_ENCODER_TEST = 0xF0
 } displayState_t;
 
 typedef struct
 {
+    volatile uint8_t subTimeSlot;
     volatile uint8_t timeSlot;
     volatile uint8_t done;
     volatile int8_t encoder1Count;

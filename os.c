@@ -4,13 +4,12 @@
 #include "os.h"
 #include "display.h"
 #include "i2c.h"
+#include "encoder.h"
 
 
-//12ms for normal load, 1ms for short load
-#define TIMER0_LOAD_HIGH_48MHZ 0xB9
-#define TIMER0_LOAD_LOW_48MHZ 0xB0
-#define TIMER0_LOAD_SHORT_HIGH_48MHZ 0xFA
-#define TIMER0_LOAD_SHORT_LOW_48MHZ 0x24
+// 1ms
+#define TIMER0_LOAD_HIGH_48MHZ 0xFA
+#define TIMER0_LOAD_LOW_48MHZ 0x24
 
 static void _system_pin_setup(void)
 {
@@ -74,25 +73,34 @@ void tmr_isr(void)
     //Timer 0
     if(INTCONbits.T0IF)
     {
-        if(os.done) 
+        //Take care of encoders
+        encoder_run();
+        
+        //Take care of time slots
+        ++os.subTimeSlot;
+        if(os.subTimeSlot>10)
         {
-            //8ms until overflow
-            TMR0H = TIMER0_LOAD_HIGH_48MHZ;
-            TMR0L = TIMER0_LOAD_LOW_48MHZ;
-            ++os.timeSlot;
-            if(os.timeSlot==NUMBER_OF_TIMESLOTS)
+            if(os.done) 
             {
-                os.timeSlot = 0;
+                //8ms until overflow
+                TMR0H = TIMER0_LOAD_HIGH_48MHZ;
+                TMR0L = TIMER0_LOAD_LOW_48MHZ;
+                ++os.timeSlot;
+                if(os.timeSlot==NUMBER_OF_TIMESLOTS)
+                {
+                    os.timeSlot = 0;
+                }
+                os.subTimeSlot = 0;
+                os.done = 0;
             }
-            os.done = 0;
+            else //Clock stretching
+            {
+                //1ms until overflow
+                TMR0H = TIMER0_LOAD_HIGH_48MHZ;
+                TMR0L = TIMER0_LOAD_LOW_48MHZ;
+            }
+            INTCONbits.T0IF = 0;
         }
-        else //Clock stretching
-        {
-            //1ms until overflow
-            TMR0H = TIMER0_LOAD_SHORT_HIGH_48MHZ;
-            TMR0L = TIMER0_LOAD_SHORT_LOW_48MHZ;
-        }
-        INTCONbits.T0IF = 0;
     }
 }
 
@@ -121,6 +129,7 @@ static void _system_timer0_init(void)
     INTCONbits.GIE = 1;
     
     //Initialize timeSlot
+    os.subTimeSlot = 0;
     os.timeSlot = 0;
 }
 
@@ -213,6 +222,9 @@ void system_init(void)
 {
     //Configure all pins as inputs/outputs analog/digital as needed
     _system_pin_setup();
+    
+    //Initialize encoders
+    encoder_init();
     
     //Set up I2C
     i2c_init();

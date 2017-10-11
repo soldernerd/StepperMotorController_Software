@@ -23,7 +23,7 @@
 
 //User defined code
 #include "os.h"
-//#include "lcd.h"
+#include "encoder.h"
 #include "i2c.h"
 #include "display.h"
 
@@ -72,6 +72,10 @@ MAIN_RETURN main(void)
             //Do this every time
             //i2c_adc_start(I2C_ADC_RESOLUTION_14BIT, I2C_ADC_GAIN_1);
             APP_DeviceCustomHIDTasks();
+            //Take care of state machine
+            encoder_statemachine();
+            display_prepare();
+            display_update();
             
             //Run periodic tasks
             switch(os.timeSlot&0b00001111)
@@ -84,7 +88,6 @@ MAIN_RETURN main(void)
                         MOTOR_DIRECTION_PIN = 0;
                         //MOTOR_ENABLE_PIN = 0;//enable
                         T2CONbits.TMR2ON = 1;
-                        os.displayState = DISPLAY_STATE_MANUAL_NORMAL;
                         display_prepare();
                         display_update();
                     }

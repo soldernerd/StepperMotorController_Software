@@ -157,13 +157,13 @@ void display_prepare()
                     display_content[1][0] = '>';
                     break;
                 case DISPLAY_STATE_MAIN_DIVIDE:
-                    display_content[1][10] = '>';
+                    display_content[1][9] = '>';
                     break;
                 case DISPLAY_STATE_MAIN_ARC:
                     display_content[2][0] = '>';
                     break;
                 case DISPLAY_STATE_MAIN_MANUAL:
-                    display_content[2][10] = '>';
+                    display_content[2][9] = '>';
                     break;
                 case DISPLAY_STATE_MAIN_ZERO:
                     display_content[3][0] = '>';
@@ -229,6 +229,17 @@ void display_prepare()
             
         case DISPLAY_STATE_ARC2:    
             memcpy(display_content, dc_arc2, sizeof display_content);
+            switch(os.displayState)
+            {
+                case DISPLAY_STATE_ARC2_CW:
+                    display_content[2][6] = 'W';
+                    display_content[2][7] = ' ';
+                    break;
+                case DISPLAY_STATE_ARC2_CANCEL:
+                    memcpy(display_content[2], "        ", 8);
+                    memcpy(display_content[3], "Cancel", 6);
+                    break;
+            }
             break;
             
         case DISPLAY_STATE_ZERO:    
@@ -237,6 +248,49 @@ void display_prepare()
             
         case DISPLAY_STATE_MANUAL:    
             memcpy(display_content, dc_manual, sizeof display_content);
+            switch(os.displayState)
+            {
+                case DISPLAY_STATE_MANUAL_CW:
+                    display_content[2][6] = 'W';
+                    display_content[2][7] = ' ';
+                    break;
+                case DISPLAY_STATE_MANUAL_CANCEL:
+                    memcpy(display_content[2], "        ", 8);
+                    memcpy(display_content[3], "Cancel", 6);
+                    break;
+            }
+            break;
+            
+        case DISPLAY_STATE_ENCODER_TEST:
+            _display_clear();
+            _display_itoa((int16_t) (os.encoder1Count), 0, display_content[0]);
+            if(ENCODER1_A_PIN)
+                display_content[0][8] = 'H';
+            else
+                display_content[0][8] = 'L';
+            if(ENCODER1_B_PIN)
+                display_content[0][9] = 'H';
+            else
+                display_content[0][9] = 'L';
+            _display_itoa((int16_t) (os.button1), 0, display_content[1]);
+            if(ENCODER1_PB_PIN)
+                display_content[1][8] = 'H';
+            else
+                display_content[1][8] = 'L';
+            _display_itoa((int16_t) (os.encoder2Count), 0, display_content[2]);
+            if(ENCODER2_A_PIN)
+                display_content[2][8] = 'H';
+            else
+                display_content[2][8] = 'L';
+            if(ENCODER2_B_PIN)
+                display_content[2][9] = 'H';
+            else
+                display_content[2][9] = 'L';
+            _display_itoa((int16_t) (os.button2), 0, display_content[3]);
+            if(ENCODER2_PB_PIN)
+                display_content[3][8] = 'H';
+            else
+                display_content[3][8] = 'L';
             break;
     }
     /*

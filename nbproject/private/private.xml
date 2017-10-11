@@ -5,7 +5,9 @@
         <group>
             <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/i2c.h</file>
             <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/display.c</file>
+            <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/encoder.h</file>
             <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/main.c</file>
+            <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/encoder.c</file>
             <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/os.h</file>
             <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/app_device_custom_hid.c</file>
             <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/i2c.c</file>
