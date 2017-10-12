@@ -26,6 +26,7 @@
       <itemPath>i2c.h</itemPath>
       <itemPath>display.h</itemPath>
       <itemPath>encoder.h</itemPath>
+      <itemPath>motor.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -49,6 +50,7 @@
       <itemPath>i2c.c</itemPath>
       <itemPath>display.c</itemPath>
       <itemPath>encoder.c</itemPath>
+      <itemPath>motor.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -69,7 +71,7 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>XC8</languageToolchain>
-        <languageToolchainVersion>1.42</languageToolchainVersion>
+        <languageToolchainVersion>1.44</languageToolchainVersion>
         <platform>3</platform>
       </toolsSet>
       <compileType>

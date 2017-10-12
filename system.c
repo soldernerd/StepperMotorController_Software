@@ -21,6 +21,7 @@ please contact mla_licensing@microchip.com
 #include "system.h"
 #include "usb.h"
 #include "os.h"
+#include "motor.h"
 
 /*
 // CONFIG1L
@@ -232,8 +233,16 @@ void interrupt SYS_InterruptHigh(void)
         USBDeviceTasks();
     #endif
 
-    //User-defined ISR
-    tmr_isr();   
+    //User-defined ISRs
+    if(PIR1bits.TMR2IF)
+    {
+        motor_isr();
+    }
+        
+    if(INTCONbits.T0IF)
+    {
+        tmr_isr();   
+    }
 }
 #else
     void YourHighPriorityISRCode();

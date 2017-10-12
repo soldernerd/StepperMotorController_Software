@@ -159,7 +159,7 @@ typedef struct
     int8_t approach_direction;
     uint16_t division;
     uint8_t divide_step_size;
-    uint16_t current_position;
+    volatile uint16_t current_position;
     int16_t divide_jump_size;
     uint16_t arc_step_size;
     int16_t arc_size;

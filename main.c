@@ -26,6 +26,7 @@
 #include "encoder.h"
 #include "i2c.h"
 #include "display.h"
+#include "motor.h"
 
 static void _calculate_adc_sum(void);
 static void _calculate_db_value(void);
@@ -60,6 +61,9 @@ MAIN_RETURN main(void)
     system_init();
 
     startup_timer = 0;
+    os.displayState = DISPLAY_STATE_ARC2_CCW;
+    
+    
     while(1)
     {
         SYSTEM_Tasks();
@@ -81,35 +85,7 @@ MAIN_RETURN main(void)
             switch(os.timeSlot&0b00001111)
             {       
                 case 0: 
-                    //PORTBbits.RB3 = 0
-                    ++stepper_count;
-                    if(stepper_count==10)
-                    {
-                        MOTOR_DIRECTION_PIN = 0;
-                        //MOTOR_ENABLE_PIN = 0;//enable
-                        T2CONbits.TMR2ON = 1;
-                        display_prepare();
-                        display_update();
-                    }
-                    if(stepper_count==50)
-                    {
-                        MOTOR_ENABLE_PIN = 1;//disable
-                        T2CONbits.TMR2ON = 0;
-                    }
-                    if(stepper_count==60)
-                    {
-                        MOTOR_DIRECTION_PIN = 1;
-                        //MOTOR_ENABLE_PIN = 0;//enable
-                        T2CONbits.TMR2ON = 1;
-                    }
-                    if(stepper_count==100)
-                    {
-                        MOTOR_ENABLE_PIN = 1;//disable
-                        T2CONbits.TMR2ON = 0;
-                        stepper_count = 0;
-                    }
                     break;
-                    
                 case 8:
                     //PORTBbits.RB3 = 1;
                     break;

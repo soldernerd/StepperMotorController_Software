@@ -2,6 +2,7 @@
 #include <xc.h>
 #include "encoder.h"
 #include "os.h"
+#include "motor.h"
 
 #define COUNT_MIN -128
 #define COUNT_MAX 127
@@ -303,6 +304,7 @@ void encoder_statemachine(void)
                     if(os.button2==1)
                     {
                         //to do: turn ccw
+                        motor_run(MOTOR_DIRECTION_CCW, 50);
                     }
                     if(os.encoder2Count>0)
                         os.displayState = DISPLAY_STATE_ARC2_CANCEL;
@@ -319,6 +321,7 @@ void encoder_statemachine(void)
                     if(os.button2==1)
                     {
                         //to do: turn cw
+                        motor_run(MOTOR_DIRECTION_CCW, 500);
                     }
                     if(os.encoder2Count<0)
                         os.displayState = DISPLAY_STATE_ARC2_CANCEL;

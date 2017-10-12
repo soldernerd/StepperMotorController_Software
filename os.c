@@ -5,6 +5,7 @@
 #include "display.h"
 #include "i2c.h"
 #include "encoder.h"
+#include "motor.h"
 
 
 // 1ms
@@ -168,55 +169,6 @@ static void init_buzzer(void)
     PORTAbits.RA1 = 0;
 }
 
-static void _stepper_init(void)
-{
-    /*
-    //RB as input (error)
-    TRISBbits.TRISB0 = 1;
-    
-    //RB3 as output (enable)
-    TRISBbits.TRISB3 = 0;
-    PORTBbits.RB3 = 0;
-    
-    //RB2 as output (direction)
-    TRISBbits.TRISB2 = 0;
-    PORTBbits.RB2 = 0;
-    
-    //RB1 as output (step)
-    TRISBbits.TRISB1 = 0;
-    PORTBbits.RB1 = 0;
-    
-    //Assign via peripheral pin select (PPS)
-    PPSUnLock();
-    RPOR4 = 14;
-    PPSLock();
-    */
-    
-    //Initialize timer 2
-    //Use timer2 for CCP1 module, timer 4 for CCP2 module
-    TCLKCONbits.T3CCP2 = 0b0;
-    TCLKCONbits.T3CCP1 = 0b1;
-    
-    //Post scaler = 16
-    T2CONbits.T2OUTPS = 0b1111;
-    
-    //Prescaler = 16
-    T2CONbits.T2CKPS = 0b10;
-    //T2CONbits.T2CKPS0 = 0;
-    PR2 = 100;
-    
-    //Disable timer 2
-    T2CONbits.TMR2ON = 0;
-    
-    //Single output mode
-    CCP1CONbits.P1M = 0b00;
-    //PWM mode both outputs active high
-    CCP1CONbits.CCP1M = 0b1100;
-    //Duty cycle LSBs
-    CCP1CONbits.DC1B = 0b00;
-    //Duty cycle high MSBs
-    CCPR1L = PR2>>1;;
-}
 
 void system_init(void)
 {
@@ -235,7 +187,7 @@ void system_init(void)
     _backlight_init();
     
     //Configure timer2 and CCCP1 module to control stepper motor
-    _stepper_init();
+    motor_init();
 
     //Set up timer0 for timeSlots
     _system_timer0_init();
