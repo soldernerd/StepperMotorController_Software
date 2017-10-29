@@ -259,9 +259,15 @@ void i2c_eeprom_read(uint16_t address, uint8_t *data, uint8_t length)
 #define DISPLAY_DATA_REGISTER 0b01000000
 #define DISPLAY_CONTINUE_FLAG 0b10000000
 #define DISPLAY_CLEAR 0b00000001
-#define DISPLAY_SET_ADDRESS 0b10000000
+#define DISPLAY_SET_DDRAM_ADDRESS 0b10000000
+#define DISPLAY_SET_CGRAM_ADDRESS 0b01000000
+#define DISPLAY_FUNC_SET_TBL0 0b00111000
 
-void i2c_display_send_init_sequence(void)
+static void _i2c_display_send_init_sequence(void);
+static void _ic2_display_set_ddram_address(uint8_t address);
+static void _ic2_display_set_cgram_address(uint8_t address);
+
+static void _i2c_display_send_init_sequence(void)
 {
     uint8_t init_sequence[9] = {
         0x3A, // 8bit, 4line, RE=1 
@@ -300,16 +306,6 @@ void i2c_display_init(void)
         0x01  // Clear display
     };
     
-    char startup[20] = {' ',' ',' ','s','o','l','d','e','r','n','e','r','d','.','c','o','m',' ',' ',' '};
-    
-    //Power UI on
-    //i2c_expander_high(I2C_EXPANDER_USER_INTERFACE);
-    //system_delay_ms(10);
-    //Enable on
-
-    //LATBbits.LATB0 = 1; 
-    //system_delay_ms(2);
-    
     //Reset display
     DISPLAY_RESET_PIN = 0;
     __delay_ms(10);
@@ -321,25 +317,35 @@ void i2c_display_init(void)
 
     //Write initialization sequence
     _i2c_write(I2C_DISPLAY_SLAVE_ADDRESS, &init_sequence[0], 9);
-    
-    //Turn backlight on
-    //i2c_digipot_backlight(30); 
-    
-    i2c_display_cursor(0, 0);
-    i2c_display_write_fixed(startup, 20);
 }
 
-void _ic2_display_set_address(uint8_t address)
+static void _ic2_display_set_ddram_address(uint8_t address)
 {
     uint8_t data_array[2];
     data_array[0] = DISPLAY_INSTRUCTION_REGISTER;
-    data_array[1] = DISPLAY_SET_ADDRESS | address;
+    data_array[1] = DISPLAY_SET_DDRAM_ADDRESS | address;
     
     //Set I2C frequency to 400kHz
     //i2c_set_frequency(I2C_FREQUENCY_100kHz);
     
     //Set address
     _i2c_write(I2C_DISPLAY_SLAVE_ADDRESS, &data_array[0], 2);
+}
+
+static void _ic2_display_set_cgram_address(uint8_t address)
+{
+    uint8_t data_array[3];
+    
+    //Check address and set GCRAM address
+    //Byte 2 is not mentioned anywhere in the data sheet but is absolutely required
+    //Thank you, MIDAS
+    address &= 0b001111111;
+    data_array[0] = DISPLAY_INSTRUCTION_REGISTER;
+    data_array[1] = DISPLAY_FUNC_SET_TBL0;
+    data_array[2] = DISPLAY_SET_CGRAM_ADDRESS | address;
+    
+    //Send data over I2C
+    _i2c_write(I2C_DISPLAY_SLAVE_ADDRESS, data_array, 3);
 }
 
 void i2c_display_cursor(uint8_t line, uint8_t position)
@@ -356,7 +362,7 @@ void i2c_display_cursor(uint8_t line, uint8_t position)
     //i2c_set_frequency(I2C_FREQUENCY_100kHz);
     
     //Set address
-    _ic2_display_set_address(address);
+    _ic2_display_set_ddram_address(address);
 }
 
 void i2c_display_write(char *data)
@@ -406,3 +412,21 @@ void i2c_display_write_fixed(char *data, uint8_t length)
     
     _i2c_stop();    
 }
+
+void i2c_display_program_custom_character(uint8_t address, uint8_t *bit_pattern)
+{
+    uint8_t cntr;
+    uint8_t data_array[11];
+    
+    //Set GC Ram address
+    _ic2_display_set_cgram_address(address<<3);
+        
+    //Prepare actual data to be sent
+    data_array[0] = DISPLAY_DATA_REGISTER;
+    for(cntr=0; cntr<8; ++cntr)
+    {
+        data_array[cntr+1] = bit_pattern[cntr] & 0b00011111;
+    }
+    _i2c_write(I2C_DISPLAY_SLAVE_ADDRESS, data_array, 9);  
+}
+

@@ -166,7 +166,7 @@ void encoder_statemachine(void)
             }
             if(os.button2==1)
             {
-                //Todo: cycle setup step size
+                os.setup_step_size = motor_get_new_stepsize(os.setup_step_size);
             }
             if(os.encoder2Count>0)
             {
@@ -184,7 +184,7 @@ void encoder_statemachine(void)
                 case DISPLAY_STATE_SETUP2_CCW:
                     if(os.button1==1 || os.button2==1)
                     {
-                        os.approach_direction = -1;
+                        os.approach_direction = MOTOR_DIRECTION_CCW;
                         os.displayState = DISPLAY_STATE_MAIN_SETUP;
                     }
                     if(os.encoder1Count+os.encoder2Count>0)
@@ -195,7 +195,7 @@ void encoder_statemachine(void)
                 case DISPLAY_STATE_SETUP2_CW:
                     if(os.button1==1 || os.button2==1)
                     {
-                        os.approach_direction = 1;
+                        os.approach_direction = MOTOR_DIRECTION_CCW;
                         os.displayState = DISPLAY_STATE_MAIN_SETUP;
                     }
                     if(os.encoder1Count+os.encoder2Count>0)
@@ -262,7 +262,6 @@ void encoder_statemachine(void)
                 case DISPLAY_STATE_ARC1_CONFIRM:
                     if(os.button1==1)
                     {
-                        //to do: set current position as zero position
                         os.displayState = DISPLAY_STATE_ARC2_CANCEL;
                     }
                     if(os.encoder1Count>0)
@@ -277,11 +276,14 @@ void encoder_statemachine(void)
                         os.displayState = DISPLAY_STATE_ARC1_CONFIRM;
                     if(os.encoder1Count<0)
                         os.displayState = DISPLAY_STATE_ARC1_CONFIRM;
-                    break;
+                    break;  
             }
             if(os.button2==1)
             {
-                //Todo: cycle ARC step size
+                switch(os.arc_step_size)
+                {
+                    
+                }
             }
             if(os.encoder2Count>0)
             {

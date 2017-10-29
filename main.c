@@ -50,8 +50,8 @@ static void _calculate_s_value(void);
 MAIN_RETURN main(void)
 { 
     uint8_t startup_timer;
-    uint16_t stepper_count = 0;
-    uint8_t direction = 0;
+    //uint16_t stepper_count = 0;
+    //uint8_t direction = 0;
     SYSTEM_Initialize(SYSTEM_STATE_USB_START);
 
     USBDeviceInit();
@@ -61,8 +61,7 @@ MAIN_RETURN main(void)
     system_init();
 
     startup_timer = 0;
-    os.displayState = DISPLAY_STATE_ARC2_CCW;
-    
+
     
     while(1)
     {

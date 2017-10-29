@@ -132,6 +132,9 @@ static void _system_timer0_init(void)
     //Initialize timeSlot
     os.subTimeSlot = 0;
     os.timeSlot = 0;
+    os.done = 0;
+    
+    
 }
 
 static void _backlight_init(void)
@@ -182,12 +185,29 @@ void system_init(void)
     i2c_init();
     
     //Initialize display and show startup screen
-    i2c_display_init();
+    display_init();
     display_update();
     _backlight_init();
     
     //Configure timer2 and CCCP1 module to control stepper motor
     motor_init();
+    
+    //Initialize variables
+    os.displayState = DISPLAY_STATE_SETUP1_CONFIRM;
+    os.busy = 0;
+    os.last_approach_direction = MOTOR_DIRECTION_CW;
+    os.setup_step_size = 100;
+    os.approach_direction = MOTOR_DIRECTION_CW;
+    os.division = 4;
+    os.divide_step_size = 100;
+    os.current_position = 0;
+    os.divide_jump_size = 1;
+    os.arc_step_size = 100;
+    os.arc_size = 3000;
+    os.arc_speed;
+    os.arc_direction = MOTOR_DIRECTION_CW;
+    os.manual_speed;
+    os.manual_direction = MOTOR_DIRECTION_CW;
 
     //Set up timer0 for timeSlots
     _system_timer0_init();

@@ -9,6 +9,7 @@
 #define	OS_H
 
 #include <stdint.h>
+#include "motor.h"
 
 /*
  * General definitions
@@ -154,9 +155,9 @@ typedef struct
     volatile int8_t button2;
     displayState_t displayState;
     uint8_t busy;
-    int8_t last_approach_direction;
+    motorDirection_t last_approach_direction;
     uint16_t setup_step_size;
-    int8_t approach_direction;
+    motorDirection_t approach_direction;
     uint16_t division;
     uint8_t divide_step_size;
     volatile uint16_t current_position;
@@ -164,9 +165,9 @@ typedef struct
     uint16_t arc_step_size;
     int16_t arc_size;
     uint8_t arc_speed;
-    int8_t arc_direction;
+    motorDirection_t arc_direction;
     uint8_t manual_speed;
-    int8_t manual_direction;
+    motorDirection_t manual_direction;
 } os_t;
 
 

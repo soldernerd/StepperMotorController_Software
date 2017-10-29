@@ -147,3 +147,20 @@ void motor_isr(void)
     //Clear interrupt flag
     PIR1bits.TMR2IF = 0;
 }
+
+uint16_t motor_get_new_stepsize(uint16_t old_stepsize)
+{
+    switch(old_stepsize)
+    {
+        case 1:
+            return 10;
+        case 10:
+            return 100;
+        case 100:
+            return 1000;
+        case 1000:
+            return 1;
+        default:
+            return 100;
+    }
+}

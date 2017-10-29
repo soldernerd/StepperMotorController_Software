@@ -10,6 +10,7 @@
 
 //extern char lcd_content[2][16];
 
+void display_init(void);
 void display_prepare(void);
 void display_update(void);
 
