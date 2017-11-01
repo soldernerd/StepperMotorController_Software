@@ -158,9 +158,9 @@ typedef struct
     motorDirection_t last_approach_direction;
     uint16_t setup_step_size;
     motorDirection_t approach_direction;
-    uint16_t division;
+    int16_t division;
     uint8_t divide_step_size;
-    volatile uint16_t current_position;
+    volatile int16_t current_position;
     int16_t divide_jump_size;
     uint16_t arc_step_size;
     int16_t arc_size;

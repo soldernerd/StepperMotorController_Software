@@ -231,15 +231,22 @@ void encoder_statemachine(void)
             }
             if(os.button2==1)
             {
-                //Todo: cycle divide_step_size
+                os.divide_step_size = encoder_next_divide_step_size(os.divide_step_size);
             }
             if(os.encoder2Count>0)
             {
-                //Todo: increase division by step size
+                os.division += os.divide_step_size;
             }
             if(os.encoder2Count<0)
             {
-                //Todo: decrease division by step size
+                if(os.division>os.divide_step_size)
+                {
+                    os.division -= os.divide_step_size;
+                }
+                else
+                {
+                    os.division = 1;
+                }
             }
             break;
 
@@ -249,11 +256,27 @@ void encoder_statemachine(void)
             if(os.button2==1)
             {
                 //Todo: jump by jump size
+                if(os.current_position+os.divide_jump_size<0)
+                    os.current_position += os.division;
+                os.current_position += os.divide_jump_size;
+                os.current_position %= os.division;
             }
             if(os.encoder2Count>0)
+            {
                 ++os.divide_jump_size;
+                if(os.divide_jump_size==0)
+                    os.divide_jump_size = 1;
+                if(os.divide_jump_size>=os.division)
+                    os.divide_jump_size = os.division - 1;
+            }
             if(os.encoder2Count<0)
+            {
                 --os.divide_jump_size;
+                if(os.divide_jump_size==0)
+                    os.divide_jump_size = -1;
+                if(os.divide_jump_size<=(-os.division))
+                    os.divide_jump_size = 1 - os.division;
+            }
             break;
 
         case DISPLAY_STATE_ARC1:
@@ -381,4 +404,19 @@ void encoder_statemachine(void)
     os.encoder2Count = 0;
     os.button1 = 0;
     os.button2 = 0;      
+}
+
+uint8_t encoder_next_divide_step_size(uint8_t old_stepsize)
+{
+    switch(old_stepsize)
+    {
+        case 1:
+            return 10;
+        case 10:
+            return 100;
+        case 100:
+            return 1;
+        default:
+            return 1;
+    }
 }

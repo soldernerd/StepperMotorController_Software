@@ -42,12 +42,12 @@ const char dc_setup1[4][20] = {DISPLAY_SETUP1_0, DISPLAY_SETUP1_1, DISPLAY_SETUP
 const char dc_setup2[4][20] = {DISPLAY_SETUP2_0, DISPLAY_SETUP2_1, DISPLAY_SETUP2_2, DISPLAY_SETUP2_3};
 #define DISPLAY_DIVIDE1_0 {'D','i','v','i','d','e',':',' ','S','e','t',' ','d','i','v','i','s','i','o','n'}
 #define DISPLAY_DIVIDE1_1 {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
-#define DISPLAY_DIVIDE1_2 {'1','0','0','/','s','t','e','p',' ',' ',DISPLAY_CC_VERTICALBAR_ADDRESS,' ',' ','C','o','n','f','i','r','m'}
+#define DISPLAY_DIVIDE1_2 {' ',' ',' ','/','s','t','e','p',' ',' ',DISPLAY_CC_VERTICALBAR_ADDRESS,' ',' ','C','o','n','f','i','r','m'}
 #define DISPLAY_DIVIDE1_3 {'1','2','3','4',' ',' ',' ',' ',' ',' ',DISPLAY_CC_VERTICALBAR_ADDRESS,' ',' ','C','a','n','c','e','l',' '}
 const char dc_divide1[4][20] = {DISPLAY_DIVIDE1_0, DISPLAY_DIVIDE1_1, DISPLAY_DIVIDE1_2, DISPLAY_DIVIDE1_3};
-#define DISPLAY_DIVIDE2_0 {'D','i','v','i','d','e',':',' ','1','2','3','4',',',' ','C','C','W',' ',' ',' '}
-#define DISPLAY_DIVIDE2_1 {'C','u','r','r','e','n','t',' ','p','o','s',':',' ','1','2','3','4',' ',' ',' '}
-#define DISPLAY_DIVIDE2_2 {'J','u','m','p',' ','s','i','z','e',':',' ','+','1','2','3',' ',' ',' ',' ',' '}
+#define DISPLAY_DIVIDE2_0 {'D','i','v','i','d','e',':',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
+#define DISPLAY_DIVIDE2_1 {'C','u','r','r','e','n','t',' ','p','o','s',':',' ',' ',' ',' ',' ',' ',' ',' '}
+#define DISPLAY_DIVIDE2_2 {'J','u','m','p',' ','s','i','z','e',':',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
 #define DISPLAY_DIVIDE2_3 {'P','r','e','s','s','T','o','J','u','m','p',' ',DISPLAY_CC_VERTICALBAR_ADDRESS,' ','C','a','n','c','e','l'}
 const char dc_divide2[4][20] = {DISPLAY_DIVIDE2_0, DISPLAY_DIVIDE2_1, DISPLAY_DIVIDE2_2, DISPLAY_DIVIDE2_3};
 #define DISPLAY_ARC1_0 {'A','r','c',':',' ','S','e','t',' ','a','r','c',' ','s','i','z','e',' ',' ',' '}
@@ -72,6 +72,8 @@ const char dc_zero[4][20] = {DISPLAY_ZERO_0, DISPLAY_ZERO_1, DISPLAY_ZERO_2, DIS
 const char dc_manual[4][20] = {DISPLAY_MANUAL_0, DISPLAY_MANUAL_1, DISPLAY_MANUAL_2, DISPLAY_MANUAL_3};
 
 static void _display_clear(void);
+static void _display_padded_itoa(int16_t value, uint8_t length, char *text);
+static void _display_signed_itoa(int16_t value, char *text);
 static void _display_itoa(int16_t value, uint8_t decimals, char *text);
 
 static void _display_clear(void)
@@ -85,6 +87,42 @@ static void _display_clear(void)
             display_content[row][col] = ' ';
         }
     }
+}
+
+static void _display_padded_itoa(int16_t value, uint8_t length, char *text)
+{
+    uint8_t pos;
+    uint8_t padding;
+    
+    uint8_t len;
+    char tmp[10];
+    itoa(tmp, value, 10);
+    len = strlen(tmp);
+    padding = 0;
+    while((padding+len)<length)
+    {
+        text[padding] = ' ';
+        ++padding;
+    }
+    for(pos=0; tmp[pos]; ++pos)
+    {
+        text[pos+padding] = tmp[pos];
+    }
+    text[pos+padding] = 0x00;
+}
+
+static void _display_signed_itoa(int16_t value, char *text)
+{
+    if(value<0)
+    {
+        value = -value;
+        text[0] = '-';
+    }
+    else
+    {
+        text[0] = '+';
+    }
+    _display_padded_itoa(value, 0, &text[1]);
 }
 
 static void _display_itoa(int16_t value, uint8_t decimals, char *text)
@@ -231,6 +269,18 @@ void display_prepare()
             
         case DISPLAY_STATE_DIVIDE1:    
             memcpy(display_content, dc_divide1, sizeof display_content);
+            //Display divide step size
+            _display_padded_itoa(os.divide_step_size, 3, temp);
+            for(cntr=0; cntr<3; ++cntr)
+            {
+                display_content[2][cntr] = temp[cntr];
+            }
+            //display division
+            _display_padded_itoa(os.division, 4, temp);
+            for(cntr=0; cntr<4; ++cntr)
+            {
+                display_content[3][cntr] = temp[cntr];
+            }
             switch(os.displayState)
             {
                 case DISPLAY_STATE_DIVIDE1_CONFIRM:
@@ -244,6 +294,37 @@ void display_prepare()
             
         case DISPLAY_STATE_DIVIDE2:    
             memcpy(display_content, dc_divide2, sizeof display_content);
+            //Display division setting
+            _display_padded_itoa(os.division, 0, temp);
+            for(cntr=0; temp[cntr]; ++cntr)
+            {
+                display_content[0][cntr+8] = temp[cntr];
+            }
+            //Display direction
+            display_content[0][cntr+8] = ',';
+            if(os.approach_direction==MOTOR_DIRECTION_CCW)
+            {
+                display_content[0][cntr+10] = 'C';
+                display_content[0][cntr+11] = 'C';
+                display_content[0][cntr+12] = 'W';
+            }
+            else
+            {
+                display_content[0][cntr+10] = 'C';
+                display_content[0][cntr+11] = 'W'; 
+            }
+            //Display current position
+            _display_padded_itoa(os.current_position, 0, temp);
+            for(cntr=0; temp[cntr]; ++cntr)
+            {
+                display_content[1][cntr+13] = temp[cntr];
+            }
+            //Display jump size
+            _display_signed_itoa(os.divide_jump_size, temp);
+            for(cntr=0; temp[cntr]; ++cntr)
+            {
+                display_content[2][cntr+11] = temp[cntr];
+            }
             break;
             
         case DISPLAY_STATE_ARC1:    
