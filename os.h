@@ -163,7 +163,7 @@ typedef struct
     volatile int16_t current_position;
     int16_t divide_jump_size;
     uint16_t arc_step_size;
-    int16_t arc_size;
+    int32_t arc_size;
     uint8_t arc_speed;
     motorDirection_t arc_direction;
     uint8_t manual_speed;

@@ -28,7 +28,7 @@ void motor_isr(void);
 void motor_run(motorDirection_t direction, uint16_t distance);
 
 //Some utilities
-uint16_t motor_get_new_stepsize(uint16_t old_stepsize);
+
 
 
 #endif	/* MOTOR_H */

@@ -56,25 +56,26 @@ const char dc_divide2[4][20] = {DISPLAY_DIVIDE2_0, DISPLAY_DIVIDE2_1, DISPLAY_DI
 #define DISPLAY_ARC1_3 {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',DISPLAY_CC_VERTICALBAR_ADDRESS,' ',' ','C','a','n','c','e','l',' '}
 const char dc_arc1[4][20] = {DISPLAY_ARC1_0, DISPLAY_ARC1_1, DISPLAY_ARC1_2, DISPLAY_ARC1_3};
 #define DISPLAY_ARC2_0 {'A','r','c',':',' ','S','i','z','e','=',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
-#define DISPLAY_ARC2_1 {'C','u','r','r','e','n','t',' ','p','o','s',':',' ','1','2','3','.','4','5','°'}
-#define DISPLAY_ARC2_2 {'T','u','r','n',' ','C','C','W',' ','|',' ','S','p','e','e','d',' ',' ',' ',' '}
-#define DISPLAY_ARC2_3 {'S','t','a','r','t',' ',' ',' ',' ','|',' ',' ','2','.','3','4','°','/','s',' '}
+#define DISPLAY_ARC2_1 {'C','u','r','r','e','n','t',' ','p','o','s',':',' ',' ',' ',' ',' ',' ',' ',DISPLAY_CC_DEGREE_ADDRESS}
+#define DISPLAY_ARC2_2 {'T','u','r','n',' ','C','C','W',' ',DISPLAY_CC_VERTICALBAR_ADDRESS,' ','S','p','e','e','d',' ',' ',' ',' '}
+#define DISPLAY_ARC2_3 {'S','t','a','r','t',' ',' ',' ',' ',DISPLAY_CC_VERTICALBAR_ADDRESS,' ',' ',' ',' ',' ',' ',DISPLAY_CC_DEGREE_ADDRESS,'/','s',' '}
 const char dc_arc2[4][20] = {DISPLAY_ARC2_0, DISPLAY_ARC2_1, DISPLAY_ARC2_2, DISPLAY_ARC2_3};
 #define DISPLAY_ZERO_0 {'R','e','t','u','r','n',' ','t','o',' ','Z','e','r','o','?',' ',' ',' ',' ',' '}
-#define DISPLAY_ZERO_1 {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
+#define DISPLAY_ZERO_1 {'C','u','r','r','e','n','t',' ','p','o','s',':',' ',' ',' ',' ',' ',' ',' ',' '}
 #define DISPLAY_ZERO_2 {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
 #define DISPLAY_ZERO_3 {' ','Y','e','s',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','N','o',' ',' '}
 const char dc_zero[4][20] = {DISPLAY_ZERO_0, DISPLAY_ZERO_1, DISPLAY_ZERO_2, DISPLAY_ZERO_3};
 #define DISPLAY_MANUAL_0 {'M','a','n','u','a','l',' ','M','o','d','e',' ',' ',' ',' ',' ',' ',' ',' ',' '}
-#define DISPLAY_MANUAL_1 {'C','u','r','r','e','n','t',' ','p','o','s',':',' ',' ',' ','3','.','4','5','°'}
-#define DISPLAY_MANUAL_2 {'T','u','r','n',' ','C','C','W',' ','|',' ','S','p','e','e','d',' ',' ',' ',' '}
-#define DISPLAY_MANUAL_3 {'S','t','a','r','t',' ',' ',' ',' ','|',' ','1','2','.','3','4','°','/','s',' '}
+#define DISPLAY_MANUAL_1 {'C','u','r','r','e','n','t',' ','p','o','s',':',' ',' ',' ',' ',' ',' ',' ',DISPLAY_CC_DEGREE_ADDRESS}
+#define DISPLAY_MANUAL_2 {'T','u','r','n',' ','C','C','W',' ',DISPLAY_CC_VERTICALBAR_ADDRESS,' ','S','p','e','e','d',' ',' ',' ',' '}
+#define DISPLAY_MANUAL_3 {'S','t','a','r','t',' ',' ',' ',' ',DISPLAY_CC_VERTICALBAR_ADDRESS, ' ',' ',' ',' ',' ',DISPLAY_CC_DEGREE_ADDRESS,'/','s',' '}
 const char dc_manual[4][20] = {DISPLAY_MANUAL_0, DISPLAY_MANUAL_1, DISPLAY_MANUAL_2, DISPLAY_MANUAL_3};
 
 static void _display_clear(void);
 static void _display_padded_itoa(int16_t value, uint8_t length, char *text);
 static void _display_signed_itoa(int16_t value, char *text);
 static void _display_itoa(int16_t value, uint8_t decimals, char *text);
+static void _display_itoa_long(int32_t value, uint8_t decimals, char *text);
 
 static void _display_clear(void)
 {
@@ -191,6 +192,30 @@ static void _display_itoa(int16_t value, uint8_t decimals, char *text)
         text[pos+1] = tmp[pos];
     }
     text[pos+1] = 0;
+}
+
+static void _display_itoa_long(int32_t value, uint8_t decimals, char *text)
+{
+    int16_t short_value;
+    int8_t last_digit;
+    uint8_t length;
+    
+    short_value = (int16_t) value;
+    if(short_value==value)
+    {
+        _display_itoa(short_value, decimals, text);
+    }
+    else
+    {
+        short_value = value / 10;
+        _display_itoa(short_value, decimals-1, text);
+        length = strlen(text);
+        last_digit = value % 10;
+        if(last_digit<0)
+            last_digit = -last_digit;
+        text[length] = last_digit + 0x30; //single digit to character
+        text[length+1] = 0x00;
+    }
 }
 
 void display_init(void)
@@ -340,12 +365,12 @@ void display_prepare()
             }
             
             //Write arc size
-            _display_itoa(os.arc_size, 2, temp);
+            _display_itoa_long(os.arc_size, 2, temp);
             for(cntr=0; temp[cntr]; ++cntr)
             {
                 display_content[1][10+cntr] = temp[cntr];
             }
-            display_content[1][10+cntr] = '°';
+            display_content[1][10+cntr] = DISPLAY_CC_DEGREE_ADDRESS;
             
             //Write arc step size
             _display_itoa(os.arc_step_size, 2, temp);
@@ -357,7 +382,7 @@ void display_prepare()
             {
                 display_content[3][space+cntr] = temp[cntr];
             }
-            display_content[3][space+cntr] = '°';
+            display_content[3][space+cntr] = DISPLAY_CC_DEGREE_ADDRESS ;
             
             break;
             
@@ -376,29 +401,41 @@ void display_prepare()
             }
             
             //Write arc size
-            _display_itoa(os.arc_size, 2, temp);
+            _display_itoa_long(os.arc_size, 2, temp);
             for(cntr=0; temp[cntr]; ++cntr)
             {
                 display_content[0][10+cntr] = temp[cntr];
             }
-            display_content[0][10+cntr] = '°';
+            display_content[0][10+cntr] = DISPLAY_CC_DEGREE_ADDRESS;
             
             //Write current position
             _display_itoa(os.current_position, 2, temp);
-            if(os.current_position>9999)
-                space = 0;
-            else if(os.current_position>999)
-                space = 1;
-            else
-                space = 2;
+            space = 6-strlen(temp);
             for(cntr=0; temp[cntr]; ++cntr)
             {
                 display_content[1][13+space+cntr] = temp[cntr];
+            }
+            
+            //Write speed
+            _display_itoa(os.arc_speed, 2, temp);
+            space = 5-strlen(temp);
+            for(cntr=0; temp[cntr]; ++cntr)
+            {
+                display_content[3][10+space+cntr] = temp[cntr];
             }
             break;
             
         case DISPLAY_STATE_ZERO:    
             memcpy(display_content, dc_zero, sizeof display_content);
+            
+            //Write current position
+            _display_itoa(os.current_position, 2, temp);
+            for(cntr=0; temp[cntr]; ++cntr)
+            {
+                display_content[1][13+cntr] = temp[cntr];
+            }
+            display_content[1][13+cntr] = DISPLAY_CC_DEGREE_ADDRESS;
+            
             break;
             
         case DISPLAY_STATE_MANUAL:    
@@ -414,16 +451,21 @@ void display_prepare()
                     memcpy(display_content[3], "Cancel", 6);
                     break;
             }
+            
+            //Write current position
             _display_itoa(os.current_position, 2, temp);
-            if(os.current_position>9999)
-                space = 0;
-            else if(os.current_position>999)
-                space = 1;
-            else
-                space = 2;
+            space = 7-strlen(temp);
             for(cntr=0; temp[cntr]; ++cntr)
             {
-                display_content[1][13+space+cntr] = temp[cntr];
+                display_content[1][12+space+cntr] = temp[cntr];
+            }
+                     
+            //Write speed
+            _display_itoa(os.manual_speed, 2, temp);
+            space = 5-strlen(temp);
+            for(cntr=0; temp[cntr]; ++cntr)
+            {
+                display_content[3][10+space+cntr] = temp[cntr];
             }
             break;
             
@@ -459,143 +501,6 @@ void display_prepare()
                 display_content[3][8] = 'L';
             break;
     }
-    /*
-    char buffer[10];
-    uint8_t cntr;
-    uint8_t offset;
-    int16_t threshold;
-    _display_clear();
-    //Line 1
-    
-    
-    if(os.db_value==-32768)
-    {
-        //There is no signal
-        buffer[0] = '<';
-        buffer[1] = '-';
-        buffer[2] = '1';
-        buffer[3] = '2';
-        buffer[4] = '0';
-        buffer[5] = 'd';
-        buffer[6] = 'B';
-        buffer[7] = 'm';
-        buffer[8] = 0;
-        cntr = 0;
-        while(buffer[cntr])
-            lcd_content[0][cntr+4] = buffer[cntr++];        
-    }
-    else if(os.db_value==32767)
-    {
-        //Overload
-        buffer[0] = '>';
-        buffer[1] = '+';
-        buffer[2] = '1';
-        buffer[3] = '0';
-        buffer[4] = 'd';
-        buffer[5] = 'B';
-        buffer[6] = 'm';
-        buffer[7] = 0;
-        cntr = 0;
-        while(buffer[cntr])
-            lcd_content[0][cntr+4] = buffer[cntr++];          
-    }
-    else
-    {
-        //Write db value
-        offset = 2;
-        if(os.db_value<0)
-            offset--;
-        if(os.db_value<-9999)
-            offset--;
-        if(os.db_value>0)
-            lcd_content[0][offset-1] = '+';
-        _display_itoa((int16_t) (os.db_value), 2, &buffer[0]);
-        cntr = 0;
-        while(buffer[cntr])
-            lcd_content[0][offset+cntr] = buffer[cntr++];
-        lcd_content[0][offset+cntr++] = 'd';
-        lcd_content[0][offset+cntr++] = 'B';
-        lcd_content[0][offset+cntr++] = 'm';
-        
-        //Write S value
-        lcd_content[0][11] = 'S';
-        _display_itoa((int16_t) (os.s_value), 0, &buffer[0]);
-        lcd_content[0][12] = buffer[0];
-        if(os.s_fraction!=0)
-        {
-            lcd_content[0][13] = '+';
-            _display_itoa((int16_t) (os.s_fraction), 0, &buffer[0]);
-            lcd_content[0][14] = buffer[0]; 
-            if(os.s_fraction>9)
-            {
-                lcd_content[0][15] = buffer[1]; 
-            }       
-        }
-    }
-        
-    if(os.db_value==-32768)
-    {
-        //There is no signal
-        buffer[0] = 'N';
-        buffer[1] = 'o';
-        buffer[2] = ' ';
-        buffer[3] = 'S';
-        buffer[4] = 'i';
-        buffer[5] = 'g';
-        buffer[6] = 'n';
-        buffer[7] = 'a';
-        buffer[8] = 'l';
-        buffer[9] = 0;
-        cntr = 0;
-        while(buffer[cntr])
-            lcd_content[1][cntr+4] = buffer[cntr++];
-    }
-    else if(os.db_value==32767)
-    {
-        //Signal overload
-        buffer[0] = 'O';
-        buffer[1] = 'v';
-        buffer[2] = 'e';
-        buffer[3] = 'r';
-        buffer[4] = 'l';
-        buffer[5] = 'o';
-        buffer[6] = 'a';
-        buffer[7] = 'd';
-        buffer[8] = 0;
-        cntr = 0;
-        while(buffer[cntr])
-            lcd_content[1][cntr+5] = buffer[cntr++];
-    }
-    else
-    {
-        //Bar chart
-        cntr = 0;
-        threshold = -11340;
-        while(os.db_value>threshold)
-        {
-            lcd_content[1][cntr] = LCD_CUSTOM_CHARACTER_BAR5;
-            ++cntr;
-            threshold += 825;
-        }
-        threshold = os.db_value - threshold + 825;
-        if(threshold>660)
-        {
-            lcd_content[1][cntr] = LCD_CUSTOM_CHARACTER_BAR4;
-        }
-        else if(threshold>495)
-        {
-            lcd_content[1][cntr] = LCD_CUSTOM_CHARACTER_BAR3;
-        }
-        else if(threshold>330)
-        {
-            lcd_content[1][cntr] = LCD_CUSTOM_CHARACTER_BAR2;
-        }
-        else if(threshold>165)
-        {
-            lcd_content[1][cntr] = LCD_CUSTOM_CHARACTER_BAR1;
-        }
-    }
-    */
 }
 
 void display_update(void)

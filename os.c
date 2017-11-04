@@ -193,7 +193,7 @@ void system_init(void)
     motor_init();
     
     //Initialize variables
-    os.displayState = DISPLAY_STATE_DIVIDE1_CONFIRM;
+    os.displayState = DISPLAY_STATE_ZERO_NORMAL;
     os.busy = 0;
     os.last_approach_direction = MOTOR_DIRECTION_CW;
     os.setup_step_size = 100;
@@ -204,7 +204,7 @@ void system_init(void)
     os.divide_jump_size = 1;
     os.arc_step_size = 100;
     os.arc_size = 3000;
-    os.arc_speed;
+    os.arc_speed = 10;
     os.arc_direction = MOTOR_DIRECTION_CW;
     os.manual_speed;
     os.manual_direction = MOTOR_DIRECTION_CW;

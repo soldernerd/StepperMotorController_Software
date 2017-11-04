@@ -166,7 +166,7 @@ void encoder_statemachine(void)
             }
             if(os.button2==1)
             {
-                os.setup_step_size = motor_get_new_stepsize(os.setup_step_size);
+                os.setup_step_size = encoder_next_setup_stepsize(os.setup_step_size);
             }
             if(os.encoder2Count>0)
             {
@@ -303,33 +303,39 @@ void encoder_statemachine(void)
             }
             if(os.button2==1)
             {
-                switch(os.arc_step_size)
-                {
-                    
-                }
+                os.arc_step_size =  encoder_next_arc_step_size(os.arc_step_size);
             }
             if(os.encoder2Count>0)
             {
-                //Todo: increase arc size by step size
+                os.arc_size += os.arc_step_size;
+                if(os.arc_size>100000)
+                    os.arc_size = 100000;
             }
             if(os.encoder2Count<0)
             {
-                //Todo: decrease arc size by step size
+                os.arc_size -= os.arc_step_size;
+                if(os.arc_size<-100000)
+                    os.arc_size = -100000;
             }
             break;
 
         case DISPLAY_STATE_ARC2:
             if(os.encoder1Count>0)
-                ++os.arc_speed;
+            {
+                if(os.arc_speed<100) //Todo: define some max speed)
+                    ++os.arc_speed;
+            }
             if(os.encoder1Count<0)
-                --os.arc_speed;
+            {
+                if(os.arc_speed>1)
+                    --os.arc_speed;
+            }
             switch(os.displayState)
             {
                 case DISPLAY_STATE_ARC2_CCW:
                     if(os.button2==1)
                     {
-                        //to do: turn ccw
-                        motor_run(MOTOR_DIRECTION_CCW, 50);
+                        motor_run(MOTOR_DIRECTION_CCW, os.arc_size);
                     }
                     if(os.encoder2Count>0)
                         os.displayState = DISPLAY_STATE_ARC2_CANCEL;
@@ -345,8 +351,7 @@ void encoder_statemachine(void)
                 case DISPLAY_STATE_ARC2_CW:
                     if(os.button2==1)
                     {
-                        //to do: turn cw
-                        motor_run(MOTOR_DIRECTION_CCW, 500);
+                        motor_run(MOTOR_DIRECTION_CW, os.arc_size);
                     }
                     if(os.encoder2Count<0)
                         os.displayState = DISPLAY_STATE_ARC2_CANCEL;
@@ -355,6 +360,16 @@ void encoder_statemachine(void)
             break;
 
         case DISPLAY_STATE_ZERO:
+            if(os.encoder1Count>0)
+            {
+                if(os.arc_speed<100) //Todo: define some max speed)
+                    ++os.arc_speed;
+            }
+            if(os.encoder1Count<0)
+            {
+                if(os.arc_speed>1)
+                    --os.arc_speed;
+            }
             if(os.button2==1)
             {
                 //Todo: drive to zero
@@ -366,9 +381,15 @@ void encoder_statemachine(void)
 
         case DISPLAY_STATE_MANUAL:
             if(os.encoder1Count>0)
-                ++os.manual_speed;
+            {
+                if(os.manual_speed<100) //Todo: define some max speed)
+                    ++os.manual_speed;
+            }
             if(os.encoder1Count<0)
-                --os.manual_speed;
+            {
+                if(os.manual_speed>1)
+                    --os.manual_speed;
+            }
             switch(os.displayState)
             {
                 case DISPLAY_STATE_MANUAL_CCW:
@@ -406,6 +427,24 @@ void encoder_statemachine(void)
     os.button2 = 0;      
 }
 
+
+uint16_t encoder_next_setup_stepsize(uint16_t old_stepsize)
+{
+    switch(old_stepsize)
+    {
+        case 1:
+            return 10;
+        case 10:
+            return 100;
+        case 100:
+            return 1000;
+        case 1000:
+            return 1;
+        default:
+            return 100;
+    }
+}
+
 uint8_t encoder_next_divide_step_size(uint8_t old_stepsize)
 {
     switch(old_stepsize)
@@ -415,6 +454,23 @@ uint8_t encoder_next_divide_step_size(uint8_t old_stepsize)
         case 10:
             return 100;
         case 100:
+            return 1;
+        default:
+            return 1;
+    }
+}
+
+uint16_t encoder_next_arc_step_size(uint16_t old_stepsize)
+{
+    switch(old_stepsize)
+    {
+        case 1:
+            return 10;
+        case 10:
+            return 100;
+        case 100:
+            return 1000;
+        case 1000:
             return 1;
         default:
             return 1;
