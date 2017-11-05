@@ -141,6 +141,7 @@ typedef enum
     DISPLAY_STATE_MANUAL_CCW = 0x81,
     DISPLAY_STATE_MANUAL_CANCEL = 0x82,
     DISPLAY_STATE_MANUAL_CW = 0x83,
+    DISPLAY_STATE_MANUAL_BUSY = 0x84,
     DISPLAY_STATE_ENCODER_TEST = 0xF0
 } displayState_t;
 
@@ -153,6 +154,7 @@ typedef struct
     volatile int8_t button1;
     volatile int8_t encoder2Count;
     volatile int8_t button2;
+    volatile uint16_t current_position;
     displayState_t displayState;
     uint8_t busy;
     motorDirection_t last_approach_direction;
@@ -160,7 +162,7 @@ typedef struct
     motorDirection_t approach_direction;
     int16_t division;
     uint8_t divide_step_size;
-    volatile int16_t current_position;
+    int16_t divide_position;
     int16_t divide_jump_size;
     uint16_t arc_step_size;
     int32_t arc_size;

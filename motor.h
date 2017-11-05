@@ -15,7 +15,7 @@
 #define FULL_STEP_SHIFT 4
 #define MILLISECONDS_START 11
 #define STEPCOUNT_START 16
-#define ACCELERATION_PERIOD 350
+#define ACCELERATION_PERIOD 70
 
 typedef enum 
 {
@@ -26,6 +26,11 @@ typedef enum
 void motor_init(void);
 void motor_isr(void);
 void motor_run(motorDirection_t direction, uint16_t distance);
+
+//Debugging functions
+void motor_start(motorDirection_t direction);
+void motor_stop(void);
+void motor_change_speed(uint8_t new_speed);
 
 //Some utilities
 

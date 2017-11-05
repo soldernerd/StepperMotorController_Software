@@ -83,6 +83,10 @@ void encoder_run(void)
 
 void encoder_statemachine(void)
 {
+    uint16_t target_divide_position;
+    uint32_t target_position;
+    int32_t distance_to_target;
+    
     //Immediately return if there is no user input
     if(os.encoder1Count==0 && os.encoder2Count==0 && os.button1==0 && os.button2==0)
     {
@@ -255,11 +259,38 @@ void encoder_statemachine(void)
                 os.displayState = DISPLAY_STATE_MAIN_DIVIDE;
             if(os.button2==1)
             {
-                //Todo: jump by jump size
-                if(os.current_position+os.divide_jump_size<0)
-                    os.current_position += os.division;
-                os.current_position += os.divide_jump_size;
-                os.current_position %= os.division;
+                //Calculate target position
+                if(os.divide_jump_size>0)
+                {
+                    target_divide_position = os.divide_position + os.divide_jump_size;
+                    if(target_divide_position>os.division)
+                        target_divide_position -= os.division;
+                }
+                else
+                {
+                    target_divide_position = os.divide_position + os.divide_jump_size;
+                    if(target_divide_position>os.division)
+                        target_divide_position += os.division;
+                }
+                //Calculate target position in terms of degrees
+                target_position = (36000 * target_divide_position) / os.division;
+                //Calculate distance to target
+                distance_to_target = target_position - os.current_position;
+                if(distance_to_target>18000)
+                    distance_to_target -= 36000;
+                if(distance_to_target<-18000)
+                    distance_to_target += 36000;
+                //Run motor
+                if(distance_to_target<0)
+                {
+                    motor_run(MOTOR_DIRECTION_CCW, (uint16_t)(-distance_to_target));
+                }
+                else
+                {
+                    motor_run(MOTOR_DIRECTION_CW, (uint16_t) distance_to_target);
+                }    
+                //Set new divide position
+                os.divide_position = target_divide_position;
             }
             if(os.encoder2Count>0)
             {
@@ -383,19 +414,28 @@ void encoder_statemachine(void)
             if(os.encoder1Count>0)
             {
                 if(os.manual_speed<100) //Todo: define some max speed)
+                {
                     ++os.manual_speed;
+                    motor_change_speed(os.manual_speed);
+                }
+                    
             }
             if(os.encoder1Count<0)
             {
-                if(os.manual_speed>1)
+                if(os.manual_speed>0)
+                {
                     --os.manual_speed;
+                    motor_change_speed(os.manual_speed);
+                }       
             }
             switch(os.displayState)
             {
                 case DISPLAY_STATE_MANUAL_CCW:
                     if(os.button2==1)
-                    {
+                    {  
                         //to do: turn ccw
+                        motor_start(MOTOR_DIRECTION_CCW);
+                        os.displayState = DISPLAY_STATE_MANUAL_BUSY;
                     }
                     if(os.encoder2Count>0)
                         os.displayState = DISPLAY_STATE_MANUAL_CANCEL;
@@ -412,9 +452,19 @@ void encoder_statemachine(void)
                     if(os.button2==1)
                     {
                         //to do: turn cw
+                        motor_start(MOTOR_DIRECTION_CW);
+                        os.displayState = DISPLAY_STATE_MANUAL_BUSY;
                     }
                     if(os.encoder2Count<0)
                         os.displayState = DISPLAY_STATE_MANUAL_CANCEL;
+                    break;
+                case DISPLAY_STATE_MANUAL_BUSY:
+                    if(os.button2==1)
+                    {
+                        //todo: turn motor off
+                        motor_stop();
+                        os.displayState = DISPLAY_STATE_MANUAL_CANCEL;
+                    }
                     break;
             }
             break;

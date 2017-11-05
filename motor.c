@@ -23,7 +23,9 @@ void motor_init(void)
     TCLKCONbits.T3CCP1 = 0b1;
     
     //Post scaler = 16
-    T2CONbits.T2OUTPS = 0b1111;
+    //T2CONbits.T2OUTPS = 0b1111;
+    //Post scaler = 1
+    T2CONbits.T2OUTPS = 0b0000;
     
     //Prescaler = 16
     T2CONbits.T2CKPS = 0b10;
@@ -54,8 +56,10 @@ void motor_run(motorDirection_t direction, uint16_t distance)
     //Initialize variables
     motor_direction = direction;
     motor_milliseconds = MILLISECONDS_START;
-    motor_current_stepcount = STEPCOUNT_START;
-    motor_final_stepcount = distance << FULL_STEP_SHIFT;
+    //motor_current_stepcount = STEPCOUNT_START;
+    motor_current_stepcount = 0;
+    motor_final_stepcount = distance;
+    motor_final_stepcount <<= FULL_STEP_SHIFT;
     motor_half_stepcount = (motor_final_stepcount>>1) - 1;
     //Calculate speed to start with and apply it
     motor_next_change_pwmperiod = ((uint32_t)TIME_BASE) / motor_milliseconds;
@@ -91,6 +95,10 @@ void motor_isr(void)
     if((motor_current_stepcount&FULL_STEP_MASK)==0)
     {
         os.current_position += motor_direction;
+        if(os.current_position==36000)
+            os.current_position = 0;
+        if(os.current_position==0xFFFF)
+            os.current_position = 35999;
         //Check if we are done
         if(motor_current_stepcount==motor_final_stepcount)
         {
@@ -106,13 +114,13 @@ void motor_isr(void)
     if(motor_current_stepcount==motor_next_change_stepcount)
     {
         //Set new period
-        if(motor_next_change_pwmperiod>4095)
+        if(motor_next_change_pwmperiod>1023)
         {
             //Prescaler = 16
             T2CONbits.T2CKPS = 0b10;
             PR2 = motor_next_change_pwmperiod>>4;
         }
-        else if(motor_next_change_pwmperiod>1023)
+        else if(motor_next_change_pwmperiod>255)
         {
             //Prescaler = 4
             T2CONbits.T2CKPS = 0b01;
@@ -124,7 +132,6 @@ void motor_isr(void)
             T2CONbits.T2CKPS = 0b00;
             PR2 = motor_next_change_pwmperiod;
         } 
-        PR2 = motor_next_change_pwmperiod>>4;
         //Set duty cycle to 50%
         CCPR1L = PR2>>1;
         //Calculate next speed (and when to change it)
@@ -146,4 +153,87 @@ void motor_isr(void)
     
     //Clear interrupt flag
     PIR1bits.TMR2IF = 0;
+}
+
+void motor_start(motorDirection_t direction)
+{
+    //Set output pins
+    MOTOR_ENABLE_PIN = 0; //Enable drive
+//    if(direction==MOTOR_DIRECTION_CCW)
+//        MOTOR_DIRECTION_PIN = 0;
+//    else
+//        MOTOR_DIRECTION_PIN = 1;
+    //Initialize variables
+    motor_direction = direction;
+    motor_milliseconds = MILLISECONDS_START;
+    //motor_milliseconds = (10*speed) + 1;
+//    motor_current_stepcount = STEPCOUNT_START;
+//    motor_final_stepcount = distance << FULL_STEP_SHIFT;
+//    motor_half_stepcount = (motor_final_stepcount>>1) - 1;
+    //Calculate speed to start with and apply it
+    motor_next_change_pwmperiod = ((uint32_t)TIME_BASE) / motor_milliseconds;
+    T2CONbits.T2CKPS = 0b10;
+    PR2 = motor_next_change_pwmperiod>>4;
+    //Set duty cycle to 50%
+    CCPR1L = PR2>>1;
+//    //Prepare next move
+//    ++motor_milliseconds;
+//    motor_next_change_stepcount = motor_milliseconds;
+//    motor_next_change_stepcount *= motor_milliseconds;
+//    motor_next_change_stepcount *= POSITION_MULTIPLIER;
+//    motor_next_change_stepcount >>= POSITION_SHIFT;
+//    motor_next_change_pwmperiod = ((uint32_t)TIME_BASE) / motor_milliseconds;
+    //Set output pins
+    MOTOR_ENABLE_PIN = 0; //Enable drive
+    if(direction==MOTOR_DIRECTION_CCW)
+        MOTOR_DIRECTION_PIN = 0;
+    else
+        MOTOR_DIRECTION_PIN = 1;
+    //Configure interrupts
+    PIR1bits.TMR2IF = 0;
+    PIE1bits.TMR2IE = 1;
+    //Clear and start timer
+    TMR2 = 0;
+    T2CONbits.TMR2ON = 1;
+    os.busy = 1;
+    os.manual_speed = 0;
+}
+
+void motor_stop(void)
+{
+    T2CONbits.TMR2ON = 0;
+    MOTOR_ENABLE_PIN = 1; //disable
+    PIR1bits.TMR2IF = 0;
+    PIE1bits.TMR2IE = 0;
+    os.busy = 0;
+    os.manual_speed = 0;
+}
+
+void motor_change_speed(uint8_t new_speed)
+{
+    motor_milliseconds = MILLISECONDS_START+new_speed;
+    motor_next_change_pwmperiod = ((uint32_t)TIME_BASE) / motor_milliseconds;
+    
+    //Set new period
+    if(motor_next_change_pwmperiod>1023)
+    {
+        //Prescaler = 16
+        T2CONbits.T2CKPS = 0b10;
+        PR2 = motor_next_change_pwmperiod>>4;
+    }
+    else if(motor_next_change_pwmperiod>255)
+    {
+        //Prescaler = 4
+        T2CONbits.T2CKPS = 0b01;
+        PR2 = motor_next_change_pwmperiod>>2;
+    }
+    else
+    {
+        //Prescaler = 1
+        T2CONbits.T2CKPS = 0b00;
+        PR2 = motor_next_change_pwmperiod;
+    } 
+    
+    //Set duty cycle to 50%
+    CCPR1L = PR2>>1;
 }

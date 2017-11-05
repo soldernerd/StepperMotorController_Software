@@ -68,7 +68,7 @@ const char dc_zero[4][20] = {DISPLAY_ZERO_0, DISPLAY_ZERO_1, DISPLAY_ZERO_2, DIS
 #define DISPLAY_MANUAL_0 {'M','a','n','u','a','l',' ','M','o','d','e',' ',' ',' ',' ',' ',' ',' ',' ',' '}
 #define DISPLAY_MANUAL_1 {'C','u','r','r','e','n','t',' ','p','o','s',':',' ',' ',' ',' ',' ',' ',' ',DISPLAY_CC_DEGREE_ADDRESS}
 #define DISPLAY_MANUAL_2 {'T','u','r','n',' ','C','C','W',' ',DISPLAY_CC_VERTICALBAR_ADDRESS,' ','S','p','e','e','d',' ',' ',' ',' '}
-#define DISPLAY_MANUAL_3 {'S','t','a','r','t',' ',' ',' ',' ',DISPLAY_CC_VERTICALBAR_ADDRESS, ' ',' ',' ',' ',' ',DISPLAY_CC_DEGREE_ADDRESS,'/','s',' '}
+#define DISPLAY_MANUAL_3 {'S','t','a','r','t',' ',' ',' ',' ',DISPLAY_CC_VERTICALBAR_ADDRESS, ' ',' ',' ',' ',' ',DISPLAY_CC_DEGREE_ADDRESS,'/','s',' ', ' '}
 const char dc_manual[4][20] = {DISPLAY_MANUAL_0, DISPLAY_MANUAL_1, DISPLAY_MANUAL_2, DISPLAY_MANUAL_3};
 
 static void _display_clear(void);
@@ -339,7 +339,7 @@ void display_prepare()
                 display_content[0][cntr+11] = 'W'; 
             }
             //Display current position
-            _display_padded_itoa(os.current_position, 0, temp);
+            _display_padded_itoa(os.divide_position, 0, temp);
             for(cntr=0; temp[cntr]; ++cntr)
             {
                 display_content[1][cntr+13] = temp[cntr];
@@ -409,7 +409,7 @@ void display_prepare()
             display_content[0][10+cntr] = DISPLAY_CC_DEGREE_ADDRESS;
             
             //Write current position
-            _display_itoa(os.current_position, 2, temp);
+            _display_itoa_long(os.current_position, 2, temp);
             space = 6-strlen(temp);
             for(cntr=0; temp[cntr]; ++cntr)
             {
@@ -429,7 +429,7 @@ void display_prepare()
             memcpy(display_content, dc_zero, sizeof display_content);
             
             //Write current position
-            _display_itoa(os.current_position, 2, temp);
+            _display_itoa_long(os.current_position, 2, temp);
             for(cntr=0; temp[cntr]; ++cntr)
             {
                 display_content[1][13+cntr] = temp[cntr];
@@ -450,10 +450,32 @@ void display_prepare()
                     memcpy(display_content[2], "        ", 8);
                     memcpy(display_content[3], "Cancel", 6);
                     break;
+                case DISPLAY_STATE_MANUAL_BUSY:
+                    memcpy(&display_content[2][0], "        ", 8);
+                    memcpy(&display_content[3][0], "Stop ", 5);
+                    
+                    //Print some debugging output
+                    _display_padded_itoa(PR2, 4, temp);
+                    for(cntr=0; temp[cntr]; ++cntr)
+                    {
+                        display_content[0][cntr] = temp[cntr];
+                    }
+                    _display_padded_itoa(CCPR1L, 4, temp);
+                    for(cntr=0; temp[cntr]; ++cntr)
+                    {
+                        display_content[0][4+cntr] = temp[cntr];
+                    }
+                    _display_padded_itoa(T2CONbits.T2CKPS, 2, temp);
+                    for(cntr=0; temp[cntr]; ++cntr)
+                    {
+                        display_content[0][8+cntr] = temp[cntr];
+                    }
+                    
+                    break;
             }
             
             //Write current position
-            _display_itoa(os.current_position, 2, temp);
+            _display_itoa_long(os.current_position, 2, temp);
             space = 7-strlen(temp);
             for(cntr=0; temp[cntr]; ++cntr)
             {

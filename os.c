@@ -193,20 +193,21 @@ void system_init(void)
     motor_init();
     
     //Initialize variables
-    os.displayState = DISPLAY_STATE_ZERO_NORMAL;
+    os.displayState = DISPLAY_STATE_DIVIDE2_NORMAL;
     os.busy = 0;
+    os.current_position = 0;
     os.last_approach_direction = MOTOR_DIRECTION_CW;
     os.setup_step_size = 100;
     os.approach_direction = MOTOR_DIRECTION_CW;
-    os.division = 4;
+    os.division = 36;
     os.divide_step_size = 10;
-    os.current_position = 0;
+    os.divide_position = 0;
     os.divide_jump_size = 1;
     os.arc_step_size = 100;
-    os.arc_size = 3000;
+    os.arc_size = 1500;
     os.arc_speed = 10;
     os.arc_direction = MOTOR_DIRECTION_CW;
-    os.manual_speed;
+    os.manual_speed = 0;
     os.manual_direction = MOTOR_DIRECTION_CW;
 
     //Set up timer0 for timeSlots
