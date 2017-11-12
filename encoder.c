@@ -353,7 +353,7 @@ void encoder_statemachine(void)
         case DISPLAY_STATE_ARC2:
             if(os.encoder1Count>0)
             {
-                if(os.arc_speed<100) //Todo: define some max speed)
+                if(os.arc_speed<200) //Todo: define some max speed)
                     ++os.arc_speed;
             }
             if(os.encoder1Count<0)
@@ -413,7 +413,7 @@ void encoder_statemachine(void)
         case DISPLAY_STATE_MANUAL:
             if(os.encoder1Count>0)
             {
-                if(os.manual_speed<100) //Todo: define some max speed)
+                if(os.manual_speed<200) //Todo: define some max speed)
                 {
                     ++os.manual_speed;
                     motor_change_speed(os.manual_speed);
