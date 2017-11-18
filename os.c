@@ -69,7 +69,7 @@ static void _system_pin_setup(void)
     ENCODER2_PB_ANCON = PIN_DIGITAL;
 }
 
-void tmr_isr(void)
+void tmr0_isr(void)
 { 
     //Timer 0
     if(INTCONbits.T0IF)

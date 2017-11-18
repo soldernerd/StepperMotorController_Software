@@ -62,6 +62,7 @@
 
 #define MOTOR_STEP_TRIS TRISBbits.TRISB1
 #define MOTOR_STEP_PIN LATBbits.LATB1
+#define MOTOR_STEP_PIN_READ PORTBbits.RB1
 #define MOTOR_STEP_PPS RPOR4
 
 #define MOTOR_ERROR_TRIS TRISBbits.TRISB0
@@ -185,7 +186,7 @@ os_t os;
  */
 
 
-void tmr_isr(void);
+void tmr0_isr(void);
 void system_init(void);
 
 #endif	/* OS_H */

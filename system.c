@@ -241,7 +241,7 @@ void interrupt SYS_InterruptHigh(void)
         
     if(INTCONbits.T0IF)
     {
-        tmr_isr();   
+        tmr0_isr();   
     }
 }
 #else

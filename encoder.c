@@ -258,7 +258,7 @@ void encoder_statemachine(void)
             if(os.button1==1)
                 os.displayState = DISPLAY_STATE_MAIN_DIVIDE;
             if(os.button2==1)
-            {
+            {             
                 //Calculate target position
                 if(os.divide_jump_size>0)
                 {

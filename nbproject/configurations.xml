@@ -27,6 +27,7 @@
       <itemPath>display.h</itemPath>
       <itemPath>encoder.h</itemPath>
       <itemPath>motor.h</itemPath>
+      <itemPath>motor_config.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
