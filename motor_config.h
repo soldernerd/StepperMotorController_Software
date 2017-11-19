@@ -1,4 +1,4 @@
-const uint8_t motor_start_lookup[54] =
+const uint8_t motor_start_lookup[56] =
 {
   234, /*i=0, t=0.0*/
   97, /*i=1, t=5.0*/
@@ -54,6 +54,8 @@ const uint8_t motor_start_lookup[54] =
   16, /*i=51, t=35.70708333333334*/
   16, /*i=52, t=36.055416666666666*/
   16, /*i=53, t=36.400416666666665*/
+  16, /*i=54, t=36.400416666666665*/ //debug
+  16 /*i=55, t=36.400416666666665*/ //debug
 };
 
 const uint16_t motor_step_lookup[322] =

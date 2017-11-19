@@ -28,7 +28,7 @@
 //#define TIME_BASE 200000
 //#define MILLISECONDS_START 50
 //#define ACCELERATION_PERIOD 349
-#define MAXIMUM_SPEED 300
+#define MAXIMUM_SPEED 310
  
 typedef enum 
 {

@@ -522,6 +522,15 @@ void display_prepare()
             else
                 display_content[3][8] = 'L';
             break;
+    } //switch
+    
+    if(!MOTOR_ERROR_PIN)
+    {
+        display_content[0][0] = 'E';
+        display_content[0][1] = 'R';
+        display_content[0][2] = 'R';
+        display_content[0][3] = 'O';
+        display_content[0][4] = 'R';
     }
 }
 

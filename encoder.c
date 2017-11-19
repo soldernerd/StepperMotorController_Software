@@ -151,7 +151,7 @@ void encoder_statemachine(void)
                 case DISPLAY_STATE_SETUP1_CONFIRM:
                     if(os.button1==1)
                     {
-                        //to do: set current position as zero position
+                        os.current_position = 0;
                         os.displayState = DISPLAY_STATE_SETUP2_CCW;
                     }
                     if(os.encoder1Count>0)
@@ -284,10 +284,12 @@ void encoder_statemachine(void)
                 if(distance_to_target<0)
                 {
                     motor_run(MOTOR_DIRECTION_CCW, (uint16_t)(-distance_to_target));
+                    //motor_run(MOTOR_DIRECTION_CCW, (uint16_t)(200*os.divide_jump_size));
                 }
                 else
                 {
                     motor_run(MOTOR_DIRECTION_CW, (uint16_t) distance_to_target);
+                    //motor_run(MOTOR_DIRECTION_CW, (uint16_t)(200*os.divide_jump_size));
                 }    
                 //Set new divide position
                 os.divide_position = target_divide_position;
