@@ -56,6 +56,18 @@ void motor_run(motorDirection_t direction, uint16_t distance, uint8_t speed)
     //Save direction
     motor_direction = direction;
     
+    //Calculate distance
+    if(distance==0)
+    {
+        //Essentially infinity. This will take a day to reach even at high speeds
+        motor_final_stepcount = 0xFFFFFF00;
+    }
+    else
+    {
+        motor_final_stepcount = distance;
+        motor_final_stepcount <<= FULL_STEP_SHIFT;
+    }
+    
     //Maximum speed
     if(speed==0)
     {
@@ -69,8 +81,7 @@ void motor_run(motorDirection_t direction, uint16_t distance, uint8_t speed)
     //Initialize variables, calculate distances
     motor_current_speed = 0;
     motor_current_stepcount = 0;
-    motor_final_stepcount = distance;
-    motor_final_stepcount <<= FULL_STEP_SHIFT;
+    
     motor_next_speed_check = motor_steps_lookup[1];
     
     //Disable PWM module
@@ -83,8 +94,20 @@ void motor_run(motorDirection_t direction, uint16_t distance, uint8_t speed)
     else
         MOTOR_DIRECTION_PIN = 1;
     
+    //Set pin high. This is already the first step
+    MOTOR_STEP_PIN = 1;
+    //Keep track of position
+    ++motor_current_stepcount;
+    if((motor_current_stepcount&FULL_STEP_MASK)==0)
+    {
+        os.current_position += motor_direction;
+        if(os.current_position==36000)
+            os.current_position = 0;
+        if(os.current_position==0xFFFF)
+            os.current_position = 35999;
+    }
+    
     //Manually control step
-    MOTOR_STEP_PIN = 0;
     PPSUnLock();
     MOTOR_STEP_PPS = 0;
     PPSLock();
@@ -116,7 +139,6 @@ void motor_run(motorDirection_t direction, uint16_t distance, uint8_t speed)
 
 void motor_isr(void)
 {
-    uint8_t step_count;
     uint32_t steps_remaining;
     uint16_t steps_until_standstill;
     uint16_t steps_until_standstill_if_accelerate;
@@ -133,7 +155,7 @@ void motor_isr(void)
             MOTOR_STEP_PIN = 0;
             
             //Check if we are done altogether
-            if((motor_current_stepcount+step_count)>=motor_final_stepcount)
+            if(motor_current_stepcount==motor_final_stepcount)
             {
                 //We are done. Stop everything
                 //Disable timer, disable motor drive, clear and disable interrupts
@@ -142,39 +164,43 @@ void motor_isr(void)
                 PIR1bits.TMR2IF = 0;
                 PIE1bits.TMR2IE = 0;
                 os.busy = 0;
-                //Make sure we do not go through the change speed code
-                motor_next_speed_check = motor_final_stepcount + 1;
             }
+            
+            //We're done for this time
+            return;
         }
         else
         {
             //Set pin high
             MOTOR_STEP_PIN = 1;
-            //Increment on rising edge only
-            step_count = 1;
         }
     }
-    else
+    
+    ++motor_current_stepcount;
+    if((motor_current_stepcount&FULL_STEP_MASK)==0)
     {
-        //Just increment by 1 step
-        step_count = 1;
+        os.current_position += motor_direction;
+        if(os.current_position==36000)
+            os.current_position = 0;
+        if(os.current_position==0xFFFF)
+            os.current_position = 35999;
     }
     
     //Check if we need to (maybe) change speed.
-    if((motor_current_stepcount+step_count)>=motor_next_speed_check)
+    if(motor_current_stepcount==motor_next_speed_check)
     {  
         //Calculate some basic values
-        if(motor_final_stepcount>motor_current_stepcount)
-            steps_remaining = motor_final_stepcount - motor_current_stepcount - step_count;
-        else
-            steps_remaining = 0;
+        steps_remaining = motor_final_stepcount - motor_current_stepcount;
         steps_until_standstill = motor_steps_lookup[motor_current_speed];
         steps_until_standstill_if_accelerate = motor_steps_lookup[motor_current_speed+2];
                 
         if((motor_current_speed>motor_maximum_speed) || (steps_until_standstill>=steps_remaining))
         {
             //Need to de-accelerate
-            --motor_current_speed;
+            if(motor_current_speed>0)
+            {
+                --motor_current_speed;
+            }
             
             //Check if we need to change drive mode
             if((motor_mode==MOTOR_MODE_PWM) && (motor_postscaler_lookup[motor_current_speed]>0))
@@ -206,38 +232,25 @@ void motor_isr(void)
             CCPR1L = PR2>>1;
             
             //Set when to de-accelerate next time
-            motor_next_speed_check = motor_final_stepcount - motor_steps_lookup[motor_current_speed-1];
+            if(motor_current_speed>0)
+            {
+                motor_next_speed_check = motor_current_stepcount + motor_steps_lookup[motor_current_speed] - motor_steps_lookup[motor_current_speed-1];
+            }
+            else
+            {
+                motor_next_speed_check = motor_current_stepcount + motor_steps_lookup[motor_current_speed];
+            }
         }
         else if((motor_current_speed==motor_maximum_speed) || (steps_until_standstill_if_accelerate>=steps_remaining))
         {
             //Maintain current speed
-            
             //Calculate when to revise speed next time
             motor_next_speed_check = motor_current_stepcount + motor_steps_lookup[motor_current_speed+1] - motor_steps_lookup[motor_current_speed];
-            //Make sure we don't miss the time to stop
-            if((motor_final_stepcount-steps_until_standstill) < motor_next_speed_check)
-            {
-               motor_next_speed_check = motor_final_stepcount - steps_until_standstill;
-            }
         }
         else
         {
             //can accelerate further
             ++motor_current_speed;
-            
-            if((motor_mode==MOTOR_MODE_MANUAL) && (motor_postscaler_lookup[motor_current_speed]==0))
-            {
-                //Need to change from manual mode to PWM mode
-                motor_mode = MOTOR_MODE_PWM;
-
-                //Enable PWM module
-                CCP1CONbits.CCP1M = 0b1100;
-                
-                //Control step pin via PWM module
-                PPSUnLock();
-                MOTOR_STEP_PPS = PPS_FUNCTION_CCP1_OUTPUT;
-                PPSLock();
-            }
             
             //Update parameters
             //Prescaler
@@ -249,24 +262,31 @@ void motor_isr(void)
             //Duty cycle = 50%
             CCPR1L = PR2>>1;
             
+            if((motor_mode==MOTOR_MODE_MANUAL) && (motor_postscaler_lookup[motor_current_speed]==0))
+            {
+                //Need to change from manual mode to PWM mode
+                motor_mode = MOTOR_MODE_PWM;
+                
+                //Enable PWM module
+                CCP1CONbits.CCP1M = 0b1100;
+                
+                //Control step pin via PWM module
+                PPSUnLock();
+                MOTOR_STEP_PPS = PPS_FUNCTION_CCP1_OUTPUT;
+                PPSLock();
+            }
+
             //Calculate when to revise speed next time
             motor_next_speed_check = motor_current_stepcount + motor_steps_lookup[motor_current_speed+1] - motor_steps_lookup[motor_current_speed];
         }
     }
     
-
-    //Check if another interrupt has occured in the mean time
+    //Just to make sure we don't miss a step in case the interrupt flag has been set again in the mean time
     if(PIR1bits.TMR2IF)
     {
         //Clear interrupt flag
         PIR1bits.TMR2IF = 0;
-        //Increment step count accordingly
-        ++step_count;
-    }
-    
-    //Keep track of current position
-    while(step_count)
-    {
+        //Keep track of position
         ++motor_current_stepcount;
         if((motor_current_stepcount&FULL_STEP_MASK)==0)
         {
@@ -275,9 +295,7 @@ void motor_isr(void)
                 os.current_position = 0;
             if(os.current_position==0xFFFF)
                 os.current_position = 35999;
-        }
-        //Decrement count
-        --step_count;
+        }  
     }
 }
 

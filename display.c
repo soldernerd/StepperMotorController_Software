@@ -417,26 +417,11 @@ void display_prepare()
             }
             
             //Write speed
-            _display_itoa(os.arc_speed, 2, temp);
+            _display_itoa(motor_speed_from_index(os.arc_speed), 2, temp);
             space = 5-strlen(temp);
             for(cntr=0; temp[cntr]; ++cntr)
             {
                 display_content[3][10+space+cntr] = temp[cntr];
-            }
-            
-            //Debug information
-            if(motor_get_mode()==MOTOR_MODE_MANUAL)
-            {
-                display_content[0][19] = 'M';
-            }
-            else if(motor_get_mode()==MOTOR_MODE_PWM)
-            {
-                display_content[0][19] = 'P';
-            }
-            _display_itoa(motor_get_current_speed(), 2, temp);
-            for(cntr=0; temp[cntr]; ++cntr)
-            {
-                display_content[1][cntr] = temp[cntr];
             }
             break;
             
@@ -480,7 +465,7 @@ void display_prepare()
             }
                      
             //Write speed
-            _display_itoa(motor_get_maximum_speed(), 2, temp);
+            _display_itoa(motor_speed_from_index(os.manual_speed), 2, temp);
             space = 5-strlen(temp);
             for(cntr=0; temp[cntr]; ++cntr)
             {

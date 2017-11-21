@@ -174,11 +174,15 @@ void encoder_statemachine(void)
             }
             if(os.encoder2Count>0)
             {
-                //Todo: increase position by step size
+                //increase position by step size
+                if(!os.busy)
+                    motor_run(MOTOR_DIRECTION_CW, os.setup_step_size, 0);
             }
             if(os.encoder2Count<0)
             {
-                //Todo: decrease position by step size
+                //decrease position by step size
+                if(!os.busy)
+                    motor_run(MOTOR_DIRECTION_CCW, os.setup_step_size, 0);
             }
             break;
 
@@ -284,12 +288,10 @@ void encoder_statemachine(void)
                 if(distance_to_target<0)
                 {
                     motor_run(MOTOR_DIRECTION_CCW, (uint16_t)(-distance_to_target), 0);
-                    //motor_run(MOTOR_DIRECTION_CCW, (uint16_t)(200*os.divide_jump_size));
                 }
                 else
                 {
                     motor_run(MOTOR_DIRECTION_CW, (uint16_t) distance_to_target, 0);
-                    //motor_run(MOTOR_DIRECTION_CW, (uint16_t)(200*os.divide_jump_size));
                 }    
                 //Set new divide position
                 os.divide_position = target_divide_position;
@@ -347,21 +349,25 @@ void encoder_statemachine(void)
             if(os.encoder2Count<0)
             {
                 os.arc_size -= os.arc_step_size;
-                if(os.arc_size<-100000)
-                    os.arc_size = -100000;
+                if(os.arc_size<1)
+                    os.arc_size = 1;
             }
             break;
 
         case DISPLAY_STATE_ARC2:
             if(os.encoder1Count>0)
             {
-                if(os.arc_speed<200) //Todo: define some max speed)
+                if(os.arc_speed<MAXIMUM_SPEED_ARC)
                     ++os.arc_speed;
+                if(os.busy)
+                    motor_change_speed(os.arc_speed);
             }
             if(os.encoder1Count<0)
             {
-                if(os.arc_speed>1)
+                if(os.arc_speed>MINIMUM_SPEED)
                     --os.arc_speed;
+                if(os.busy)
+                    motor_change_speed(os.arc_speed);
             }
             switch(os.displayState)
             {
@@ -369,13 +375,18 @@ void encoder_statemachine(void)
                     if(os.button2==1)
                     {
                         motor_run(MOTOR_DIRECTION_CCW, os.arc_size, os.arc_speed);
+                        os.displayState = DISPLAY_STATE_ARC2_CANCEL;
                     }
                     if(os.encoder2Count>0)
                         os.displayState = DISPLAY_STATE_ARC2_CANCEL;
                     break;
                 case DISPLAY_STATE_ARC2_CANCEL:
                     if(os.button2==1)
+                    {
+                        if(os.busy)
+                            motor_stop();
                         os.displayState = DISPLAY_STATE_MAIN_ARC;
+                    }
                     if(os.encoder2Count>0)
                         os.displayState = DISPLAY_STATE_ARC2_CW;
                     if(os.encoder2Count<0)
@@ -385,6 +396,7 @@ void encoder_statemachine(void)
                     if(os.button2==1)
                     {
                         motor_run(MOTOR_DIRECTION_CW, os.arc_size, os.arc_speed);
+                        os.displayState = DISPLAY_STATE_ARC2_CANCEL;
                     }
                     if(os.encoder2Count<0)
                         os.displayState = DISPLAY_STATE_ARC2_CANCEL;
@@ -405,8 +417,21 @@ void encoder_statemachine(void)
             }
             if(os.button2==1)
             {
-                //Todo: drive to zero
+                //Drive to zero
+                if(os.current_position==0)
+                {
+                    //do nothing
+                }
+                else if(os.current_position<=18000)
+                {
+                    motor_run(MOTOR_DIRECTION_CCW, os.current_position, 0);
+                }
+                else
+                {
+                    motor_run(MOTOR_DIRECTION_CW, (36000-os.current_position), 0);
+                }
                 os.displayState = DISPLAY_STATE_MAIN_ZERO;
+                os.divide_position = 0;
             }
             if(os.button1==1)
                 os.displayState = DISPLAY_STATE_MAIN_ZERO;  
@@ -415,7 +440,7 @@ void encoder_statemachine(void)
         case DISPLAY_STATE_MANUAL:
             if(os.encoder1Count>0)
             {
-                if(os.manual_speed<200) //Todo: define some max speed)
+                if(os.manual_speed<MAXIMUM_SPEED_MANUAL)
                 {
                     ++os.manual_speed;
                     motor_change_speed(os.manual_speed);
@@ -424,7 +449,7 @@ void encoder_statemachine(void)
             }
             if(os.encoder1Count<0)
             {
-                if(os.manual_speed>0)
+                if(os.manual_speed>MINIMUM_SPEED)
                 {
                     --os.manual_speed;
                     motor_change_speed(os.manual_speed);
@@ -435,7 +460,7 @@ void encoder_statemachine(void)
                 case DISPLAY_STATE_MANUAL_CCW:
                     if(os.button2==1)
                     {  
-                        motor_run(MOTOR_DIRECTION_CCW, 0xFF00, os.manual_speed);
+                        motor_run(MOTOR_DIRECTION_CCW, 0, os.manual_speed);
                         os.displayState = DISPLAY_STATE_MANUAL_BUSY;
                     }
                     if(os.encoder2Count>0)
@@ -453,7 +478,7 @@ void encoder_statemachine(void)
                     if(os.button2==1)
                     {
                         os.displayState = DISPLAY_STATE_MANUAL_BUSY;
-                        motor_run(MOTOR_DIRECTION_CW, 0xFF00, os.manual_speed);
+                        motor_run(MOTOR_DIRECTION_CW, 0, os.manual_speed);
                         
                     }
                     if(os.encoder2Count<0)
@@ -482,14 +507,14 @@ uint16_t encoder_next_setup_stepsize(uint16_t old_stepsize)
 {
     switch(old_stepsize)
     {
-        case 1:
-            return 10;
-        case 10:
+        case 1000:
             return 100;
         case 100:
-            return 1000;
-        case 1000:
+            return 10;
+        case 10:
             return 1;
+        case 1:
+            return 1000;
         default:
             return 100;
     }
@@ -499,12 +524,12 @@ uint8_t encoder_next_divide_step_size(uint8_t old_stepsize)
 {
     switch(old_stepsize)
     {
-        case 1:
+        case 100:
             return 10;
         case 10:
-            return 100;
-        case 100:
             return 1;
+        case 1:
+            return 100;
         default:
             return 1;
     }
@@ -514,15 +539,15 @@ uint16_t encoder_next_arc_step_size(uint16_t old_stepsize)
 {
     switch(old_stepsize)
     {
-        case 1:
-            return 10;
-        case 10:
+        case 1000:
             return 100;
         case 100:
+            return 10;
+        case 10:
+            return 1;
+        case 1:
             return 1000;
-        case 1000:
-            return 1;
         default:
-            return 1;
+            return 100;
     }
 }
