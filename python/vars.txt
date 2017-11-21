@@ -1,4 +1,4 @@
-const uint16_t motor_steps_lookup[415] =
+stps[415] =
 {
     1, /*i=0*/
     2, /*i=1*/
@@ -417,7 +417,7 @@ const uint16_t motor_steps_lookup[415] =
     22388 /*i=414*/
 };
 
-const uint8_t motor_prescaler_lookup[415] =
+pre[415] =
 {
     2, /*i=0*/
     2, /*i=1*/
@@ -836,7 +836,7 @@ const uint8_t motor_prescaler_lookup[415] =
     0 /*i=414*/
 };
 
-const uint8_t motor_period_lookup[415] =
+per[415] =
 {
     233, /*i=0*/
     220, /*i=1*/
@@ -1255,7 +1255,7 @@ const uint8_t motor_period_lookup[415] =
     199 /*i=414*/
 };
 
-const uint8_t motor_postscaler_lookup[415] =
+post[415] =
 {
     3, /*i=0*/
     2, /*i=1*/
@@ -1674,7 +1674,7 @@ const uint8_t motor_postscaler_lookup[415] =
     0 /*i=414*/
 };
 
-const uint16_t motor_speed_lookup[415] =
+spds[415] =
 {
     25, /*i=0*/
     35, /*i=1*/

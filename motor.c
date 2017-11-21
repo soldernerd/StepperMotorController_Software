@@ -6,137 +6,75 @@
 #include "os.h"
 
 motorMode_t motor_mode;
-
-//uint16_t motor_milliseconds;
-uint16_t motor_current_speed;
-uint32_t motor_current_stepcount;
-uint32_t motor_final_stepcount;
-uint32_t motor_half_stepcount;
 motorDirection_t motor_direction;
+uint16_t motor_maximum_speed;
 
-uint32_t motor_next_change_stepcount;
-//uint16_t motor_next_change_pwmperiod;
-uint8_t motor_next_change_prescaler;
-uint8_t motor_next_change_period;
+volatile uint16_t motor_current_speed;
+volatile uint32_t motor_current_stepcount;
+volatile uint32_t motor_final_stepcount;
+volatile uint32_t motor_next_speed_check;
 
-uint32_t tmp;
-
-void startup(void)
+motorMode_t motor_get_mode(void)
 {
-    MOTOR_ENABLE_PIN = 0; //Enable drive
-    
-    //Step low
-    MOTOR_STEP_PIN = 0;
-    
-    //Manually control step
-    PPSUnLock();
-    MOTOR_STEP_PPS = 0;
-    PPSLock();
-    
-    //Prescaler = 16
-    T2CONbits.T2CKPS = 0b10;
-    
-    //Post-Scaler = 16
-    T2CONbits.T2OUTPS = 0b1111;
-    
-    motor_current_stepcount = 0;
-    PR2 =  motor_start_lookup[motor_current_stepcount];
-    
-    //Clear interrupt flag
-    PIR1bits.TMR2IF = 0;
-    //Disable interrupts
-    PIE1bits.TMR2IE = 0;
-    
-    //Clear and start timer
-    TMR2 = 0;
-    T2CONbits.TMR2ON = 1;
-    
-    //while(motor_current_stepcount<motor_step_lookup[0]) 
-    while(motor_current_stepcount<54) 
-    {
-        //++motor_current_stepcount;
-        if(MOTOR_STEP_PIN)
-        //if(steps&0b00000001)
-        {
-            MOTOR_STEP_PIN = 0;
-            ++motor_current_stepcount;
-            PR2 =  motor_start_lookup[motor_current_stepcount];
-        }
-        else
-        {
-            MOTOR_STEP_PIN = 1;
-        }
-        while(!PIR1bits.TMR2IF);
-        PIR1bits.TMR2IF = 0;
-    }
-    
-    MOTOR_STEP_PIN = 0;
-    
-    //Disable drive
-    MOTOR_ENABLE_PIN = 1;
-    
-    //Post scaler = 1
-    T2CONbits.T2OUTPS = 0b0000;
-    
-    //Stop timer
-    T2CONbits.TMR2ON = 0;
-    
-    //Control step pin via PWM module
-    PPSUnLock();
-    MOTOR_STEP_PPS = PPS_FUNCTION_CCP1_OUTPUT;
-    PPSLock();
+    return motor_mode;
+}
+
+uint16_t motor_get_maximum_speed(void)
+{
+    return motor_speed_lookup[motor_maximum_speed];
+}
+
+uint16_t motor_get_current_speed(void)
+{
+    return motor_speed_lookup[motor_current_speed];
+}
+
+uint16_t motor_speed_from_index(uint8_t speed_index)
+{
+    return motor_speed_lookup[speed_index];
 }
 
 void motor_init(void)
 {
-    uint16_t cntr;
-    uint16_t tmp;
-    
     //Initialize timer 2
     //Use timer2 for CCP1 module, timer 4 for CCP2 module
     TCLKCONbits.T3CCP2 = 0b0;
     TCLKCONbits.T3CCP1 = 0b1;
     
-    //Post scaler = 16
-    //T2CONbits.T2OUTPS = 0b1111;
-    //Post scaler = 1
-    T2CONbits.T2OUTPS = 0b0000;
-    
-    //Prescaler = 16
-    T2CONbits.T2CKPS = 0b10;
-    //T2CONbits.T2CKPS0 = 0;
-    PR2 = 100;
-    
-    //Disable timer 2
-    T2CONbits.TMR2ON = 0;
-    
     //Single output mode
     CCP1CONbits.P1M = 0b00;
-    //PWM mode both outputs active high
-    CCP1CONbits.CCP1M = 0b1100;
+    
     //Duty cycle LSBs
     CCP1CONbits.DC1B = 0b00;
-    //Duty cycle high MSBs
-    CCPR1L = PR2>>1;
+    
+    //Enable drive
+    MOTOR_ENABLE_PIN = 0;
 }
 
-void motor_run(motorDirection_t direction, uint16_t distance)
+void motor_run(motorDirection_t direction, uint16_t distance, uint8_t speed)
 {
     //Save direction
     motor_direction = direction;
     
-    //Debug!
-    //distance = 1005;
+    //Maximum speed
+    if(speed==0)
+    {
+        motor_maximum_speed = MAXIMUM_SPEED;
+    }
+    else
+    {
+        motor_maximum_speed = speed;
+    }
     
     //Initialize variables, calculate distances
     motor_current_speed = 0;
     motor_current_stepcount = 0;
     motor_final_stepcount = distance;
     motor_final_stepcount <<= FULL_STEP_SHIFT;
-    motor_half_stepcount = (motor_final_stepcount>>1) - 1;
+    motor_next_speed_check = motor_steps_lookup[1];
     
-    //Enable PWM module
-    CCP1CONbits.CCP1M = 0b1100;
+    //Disable PWM module
+    CCP1CONbits.CCP1M = 0b0000;
     
     //Set output pins
     MOTOR_ENABLE_PIN = 0; //Enable drive
@@ -146,32 +84,24 @@ void motor_run(motorDirection_t direction, uint16_t distance)
         MOTOR_DIRECTION_PIN = 1;
     
     //Manually control step
+    MOTOR_STEP_PIN = 0;
     PPSUnLock();
     MOTOR_STEP_PPS = 0;
     PPSLock();
     
     //Set motor mode
-    motor_mode = MOTOR_MODE_START;
+    motor_mode = MOTOR_MODE_MANUAL;
     
-    //Prescaler = 16
-    T2CONbits.T2CKPS = 0b10;
-    //Post-Scaler = 8
-    T2CONbits.T2OUTPS = 7;
-    //Period according to lookup table
-    PR2 =  motor_start_lookup[motor_current_stepcount];
-
-//    //Set prescaler to maximum value of 16
-//    T2CONbits.T2CKPS = 0b10;
-//    //Set PWM period to maximum value of 255
-//    PR2 = 255;
-//    //Set duty cycle to 50%
-//    CCPR1L = PR2>>1;
-//
-//    //Prepare next move
-//    motor_next_change_stepcount = motor_step_lookup[motor_current_speed];
-//    motor_next_change_prescaler = motor_prescaler_lookup[motor_current_speed];
-//    motor_next_change_period = motor_period_lookup[motor_current_speed];
-
+    //Set up timer 2 and PWM module
+    //Prescaler
+    T2CONbits.T2CKPS = motor_prescaler_lookup[motor_current_speed];
+    //Period
+    PR2 = motor_period_lookup[motor_current_speed];
+    //Postscaler
+    T2CONbits.T2OUTPS = motor_postscaler_lookup[motor_current_speed];
+    //Duty cycle = 50%
+    CCPR1L = PR2>>1;
+    
     //Configure interrupts
     PIR1bits.TMR2IF = 0;
     PIE1bits.TMR2IE = 1;
@@ -187,227 +117,152 @@ void motor_run(motorDirection_t direction, uint16_t distance)
 void motor_isr(void)
 {
     uint8_t step_count;
+    uint32_t steps_remaining;
+    uint16_t steps_until_standstill;
+    uint16_t steps_until_standstill_if_accelerate;
     
-    switch(motor_mode)
+    //Clear interrupt flag
+    PIR1bits.TMR2IF = 0;
+    
+    if(motor_mode==MOTOR_MODE_MANUAL)
     {
-        case MOTOR_MODE_RUN:
-    
-            //Clear interrupt flag
-            PIR1bits.TMR2IF = 0;
-            step_count = 1;
-
-            //Check if we are done
-            if((motor_current_stepcount+1)==motor_final_stepcount)
+        //Need to toggle step pin manually
+        if(MOTOR_STEP_PIN)
+        {
+            //Set pin low
+            MOTOR_STEP_PIN = 0;
+            
+            //Check if we are done altogether
+            if((motor_current_stepcount+step_count)>=motor_final_stepcount)
             {
-                //We are done. 
-                //Disable PWM, timer, disable motor drive, clear and disable interrupts
-                CCP1CONbits.CCP1M = 0b0000;
+                //We are done. Stop everything
+                //Disable timer, disable motor drive, clear and disable interrupts
                 T2CONbits.TMR2ON = 0;
-                MOTOR_ENABLE_PIN = 1; //disable
+                //MOTOR_ENABLE_PIN = 1; //disable
                 PIR1bits.TMR2IF = 0;
                 PIE1bits.TMR2IE = 0;
-
-                //Keep track of position
-                ++motor_current_stepcount;
-                if((motor_current_stepcount&FULL_STEP_MASK)==0)
-                {
-                    os.current_position += motor_direction;
-                    if(os.current_position==36000)
-                        os.current_position = 0;
-                    if(os.current_position==0xFFFF)
-                        os.current_position = 35999;
-                }
-
-                return;
+                os.busy = 0;
+                //Make sure we do not go through the change speed code
+                motor_next_speed_check = motor_final_stepcount + 1;
             }
-
-            //Check if we need to change speed
-            if(motor_current_stepcount==motor_next_change_stepcount)
-            {
-                //Set new prescaler and period
-                T2CONbits.T2CKPS = motor_next_change_prescaler;
-                PR2 = motor_next_change_period;
-                //Set duty cycle to 50%
-                CCPR1L = PR2>>1;
-
-                //Check if next interrupt has already occured
-                if(PIR1bits.TMR2IF)
-                {
-                    //Clear interrupt flag
-                    PIR1bits.TMR2IF = 0;
-                    //Increment interrupt counter
-                    ++step_count;
-                    //Keep track of position
-                }
-
-                //Check whether to accelerate or de- accelerate
-                if((motor_current_speed==MAXIMUM_SPEED) || (motor_current_stepcount>motor_half_stepcount) || (motor_step_lookup[motor_current_speed+1]>motor_half_stepcount))
-                {
-                    //De-accelerate
-                    motor_next_change_stepcount = motor_final_stepcount - motor_step_lookup[motor_current_speed];
-                    if(motor_current_speed>0)
-                    {
-                        //de-accelerate as usual
-                        --motor_current_speed;
-                        motor_next_change_prescaler = motor_prescaler_lookup[motor_current_speed];
-                        motor_next_change_period = motor_period_lookup[motor_current_speed];
-                    }
-                    else
-                    {
-                        if(motor_final_stepcount-motor_current_stepcount==53)
-                        {
-                            //Switch to manual mode
-
-                            //Change motor mode
-                            motor_mode = MOTOR_MODE_STOP;
-
-                            //Control steps manually
-                            MOTOR_STEP_PIN = 1;
-                            PPSUnLock();
-                            MOTOR_STEP_PPS = 0;
-                            PPSLock();
-                            
-                            //Zero timer just in case
-                            TMR2 = 0x00;
-
-                            //Post scaler = 8
-                            T2CONbits.T2OUTPS = 7;
-                            //Set Prescaler = 16
-                            T2CONbits.T2CKPS = 0b10;
-                            //Set PWM period
-                            PR2 = motor_start_lookup[motor_final_stepcount-motor_current_stepcount-2]; 
-                        }
-                        else
-                        {
-                            motor_next_change_stepcount = motor_final_stepcount-53;
-                        }
-                    }
-                }
-                else
-                {
-                    //Accelerate
-                    ++motor_current_speed;
-                    motor_next_change_stepcount = motor_step_lookup[motor_current_speed];
-                    motor_next_change_prescaler = motor_prescaler_lookup[motor_current_speed];
-                    motor_next_change_period = motor_period_lookup[motor_current_speed];
-                }
-            }
-
-            //Check if next interrupt has already occured
-            if(PIR1bits.TMR2IF)
-            {
-                //Clear interrupt flag
-                PIR1bits.TMR2IF = 0;
-                //Increment interrupt counter
-                ++step_count;
-            }
-            
-            break; //MOTOR_MODE_NORMAL
-        
-        case MOTOR_MODE_START:
-            
-            if(MOTOR_STEP_PIN)
-            {
-                MOTOR_STEP_PIN = 0;
-                step_count = 1;
-                //++motor_current_stepcount;
-
-                //Check if start phase is over
-                if(motor_current_stepcount<54)
-                {
-                    //Start phase not over yet, load new value
-                    PR2 =  motor_start_lookup[motor_current_stepcount];
-                }
-                else
-                {
-                    //Start phase is over, switch to proper pwm mode
-                    
-                    //Stop timer 2
-                    //T2CONbits.TMR2ON = 0;
-                    
-                    
-                    
-                    //Calculate next values
-                    motor_current_speed = 1;
-                    motor_next_change_stepcount = motor_step_lookup[motor_current_speed];
-                    motor_next_change_prescaler = motor_prescaler_lookup[motor_current_speed];
-                    motor_next_change_period = motor_period_lookup[motor_current_speed];
-                    
-                    //Clear and start timer
-                    //TMR2 = 0;
-                    //T2CONbits.TMR2ON = 1;
-                }
-            }
-            else
-            {
-                if(motor_current_stepcount==55)
-                {
-                    //Change mode
-                    //Change motor mode
-                    motor_mode = MOTOR_MODE_RUN;
-
-                    //Control step pin via PWM module
-                    PPSUnLock();
-                    MOTOR_STEP_PPS = PPS_FUNCTION_CCP1_OUTPUT;
-                    PPSLock();
-                    
-                    //Post scaler = 1
-                    T2CONbits.T2OUTPS = 0b0000;
-                    //Set Prescaler
-                    T2CONbits.T2CKPS =  motor_prescaler_lookup[0];
-                    //Set PWM period
-                    PR2 = motor_period_lookup[0];
-                    //Set duty cycle to 50%
-                    CCPR1L = PR2>>1;
-                }
-                else
-                {
-                   //Just set step pin high
-                    MOTOR_STEP_PIN = 1; 
-                }
+        }
+        else
+        {
+            //Set pin high
+            MOTOR_STEP_PIN = 1;
+            //Increment on rising edge only
+            step_count = 1;
+        }
+    }
+    else
+    {
+        //Just increment by 1 step
+        step_count = 1;
+    }
+    
+    //Check if we need to (maybe) change speed.
+    if((motor_current_stepcount+step_count)>=motor_next_speed_check)
+    {  
+        //Calculate some basic values
+        if(motor_final_stepcount>motor_current_stepcount)
+            steps_remaining = motor_final_stepcount - motor_current_stepcount - step_count;
+        else
+            steps_remaining = 0;
+        steps_until_standstill = motor_steps_lookup[motor_current_speed];
+        steps_until_standstill_if_accelerate = motor_steps_lookup[motor_current_speed+2];
                 
+        if((motor_current_speed>motor_maximum_speed) || (steps_until_standstill>=steps_remaining))
+        {
+            //Need to de-accelerate
+            --motor_current_speed;
+            
+            //Check if we need to change drive mode
+            if((motor_mode==MOTOR_MODE_PWM) && (motor_postscaler_lookup[motor_current_speed]>0))
+            {
+                //Need to change from PWM mode to manual mode
+                motor_mode = MOTOR_MODE_MANUAL;
+            
+                //Control steps manually
+                MOTOR_STEP_PIN = 1;
+                PPSUnLock();
+                MOTOR_STEP_PPS = 0;
+                PPSLock();
+                
+                //clear timer
+                TMR2 = 0;
+                
+                //Turn off PWM module
+                CCP1CONbits.CCP1M = 0b0000;
             }
-
-            //Clear interrupt flag
-            PIR1bits.TMR2IF = 0;
-
-            break;
         
-        case MOTOR_MODE_STOP:
+            //Update parameters
+            //Prescaler
+            T2CONbits.T2CKPS = motor_prescaler_lookup[motor_current_speed];
+            //Period
+            PR2 = motor_period_lookup[motor_current_speed];
+            //Postscaler
+            T2CONbits.T2OUTPS = motor_postscaler_lookup[motor_current_speed];
+            //Duty cycle = 50%
+            CCPR1L = PR2>>1;
             
-            if(MOTOR_STEP_PIN)
-            {
-                MOTOR_STEP_PIN = 0;
-                step_count = 1;
-
-                //load new value
-                PR2 =  motor_start_lookup[motor_final_stepcount - motor_current_stepcount - 2];
-            }
-            else
-            {
-                if(motor_current_stepcount==motor_final_stepcount)
-                {
-                    //Stop altogether
-                    //We are done. 
-                    //Disable PWM, timer, disable motor drive, clear and disable interrupts
-                    CCP1CONbits.CCP1M = 0b0000;
-                    T2CONbits.TMR2ON = 0;
-                    MOTOR_ENABLE_PIN = 1; //disable
-                    PIR1bits.TMR2IF = 0;
-                    PIE1bits.TMR2IE = 0;
-                }
-                else
-                {
-                   //Just set step pin high
-                    MOTOR_STEP_PIN = 1; 
-                }
-            }
-
-            //Clear interrupt flag
-            PIR1bits.TMR2IF = 0;
+            //Set when to de-accelerate next time
+            motor_next_speed_check = motor_final_stepcount - motor_steps_lookup[motor_current_speed-1];
+        }
+        else if((motor_current_speed==motor_maximum_speed) || (steps_until_standstill_if_accelerate>=steps_remaining))
+        {
+            //Maintain current speed
             
-            break;
-    } //switch
+            //Calculate when to revise speed next time
+            motor_next_speed_check = motor_current_stepcount + motor_steps_lookup[motor_current_speed+1] - motor_steps_lookup[motor_current_speed];
+            //Make sure we don't miss the time to stop
+            if((motor_final_stepcount-steps_until_standstill) < motor_next_speed_check)
+            {
+               motor_next_speed_check = motor_final_stepcount - steps_until_standstill;
+            }
+        }
+        else
+        {
+            //can accelerate further
+            ++motor_current_speed;
+            
+            if((motor_mode==MOTOR_MODE_MANUAL) && (motor_postscaler_lookup[motor_current_speed]==0))
+            {
+                //Need to change from manual mode to PWM mode
+                motor_mode = MOTOR_MODE_PWM;
+
+                //Enable PWM module
+                CCP1CONbits.CCP1M = 0b1100;
+                
+                //Control step pin via PWM module
+                PPSUnLock();
+                MOTOR_STEP_PPS = PPS_FUNCTION_CCP1_OUTPUT;
+                PPSLock();
+            }
+            
+            //Update parameters
+            //Prescaler
+            T2CONbits.T2CKPS = motor_prescaler_lookup[motor_current_speed];
+            //Period
+            PR2 = motor_period_lookup[motor_current_speed];
+            //Postscaler
+            T2CONbits.T2OUTPS = motor_postscaler_lookup[motor_current_speed];
+            //Duty cycle = 50%
+            CCPR1L = PR2>>1;
+            
+            //Calculate when to revise speed next time
+            motor_next_speed_check = motor_current_stepcount + motor_steps_lookup[motor_current_speed+1] - motor_steps_lookup[motor_current_speed];
+        }
+    }
+    
+
+    //Check if another interrupt has occured in the mean time
+    if(PIR1bits.TMR2IF)
+    {
+        //Clear interrupt flag
+        PIR1bits.TMR2IF = 0;
+        //Increment step count accordingly
+        ++step_count;
+    }
     
     //Keep track of current position
     while(step_count)
@@ -426,64 +281,12 @@ void motor_isr(void)
     }
 }
 
-
-void motor_start(motorDirection_t direction)
-{
-    //Save direction
-    motor_direction = direction;
-    
-    //uint32_t motor_half_stepcount;
-    
-    //Set output pins
-    MOTOR_ENABLE_PIN = 0; //Enable drive
-    if(direction==MOTOR_DIRECTION_CCW)
-        MOTOR_DIRECTION_PIN = 0;
-    else
-        MOTOR_DIRECTION_PIN = 1;
-    
-    //__delay_ms(10);
-
-    //Set prescaler to maximum value of 16
-    T2CONbits.T2CKPS = 0b10;
-    //Set PWM period to maximum value of 255
-    PR2 = 255;
-    //Set duty cycle to 50%
-    CCPR1L = PR2>>1;
-
-    //Prepare next move
-    //motor_milliseconds = MILLISECONDS_START;
-    motor_current_speed = 0;
-    motor_next_change_stepcount = motor_step_lookup[motor_current_speed];
-    motor_next_change_prescaler = motor_prescaler_lookup[motor_current_speed];
-    motor_next_change_period = motor_period_lookup[motor_current_speed];
-    //motor_next_change_pwmperiod = ((uint32_t)TIME_BASE) / motor_milliseconds;
-
-    //Configure interrupts
-    PIR1bits.TMR2IF = 0;
-    PIE1bits.TMR2IE = 1;
-    //Clear and start timer
-    TMR2 = 0;
-    T2CONbits.TMR2ON = 1;
-    os.busy = 1;
-    os.manual_speed = 0;
-}
-
 void motor_stop(void)
 {
-    T2CONbits.TMR2ON = 0;
-    MOTOR_ENABLE_PIN = 1; //disable
-    PIR1bits.TMR2IF = 0;
-    PIE1bits.TMR2IE = 0;
-    os.busy = 0;
-    os.manual_speed = 0;
+    motor_final_stepcount = motor_current_stepcount + motor_steps_lookup[motor_current_speed];
 }
 
 void motor_change_speed(uint8_t new_speed)
 {
-    motor_current_speed = new_speed;
-    //Set new prescaler and period
-    T2CONbits.T2CKPS = motor_prescaler_lookup[new_speed];
-    PR2 = motor_period_lookup[new_speed];
-    //Set duty cycle to 50%
-    CCPR1L = PR2>>1;
+    motor_maximum_speed = (uint16_t) new_speed;
 }

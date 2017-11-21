@@ -423,6 +423,21 @@ void display_prepare()
             {
                 display_content[3][10+space+cntr] = temp[cntr];
             }
+            
+            //Debug information
+            if(motor_get_mode()==MOTOR_MODE_MANUAL)
+            {
+                display_content[0][19] = 'M';
+            }
+            else if(motor_get_mode()==MOTOR_MODE_PWM)
+            {
+                display_content[0][19] = 'P';
+            }
+            _display_itoa(motor_get_current_speed(), 2, temp);
+            for(cntr=0; temp[cntr]; ++cntr)
+            {
+                display_content[1][cntr] = temp[cntr];
+            }
             break;
             
         case DISPLAY_STATE_ZERO:    
@@ -452,25 +467,7 @@ void display_prepare()
                     break;
                 case DISPLAY_STATE_MANUAL_BUSY:
                     memcpy(&display_content[2][0], "        ", 8);
-                    memcpy(&display_content[3][0], "Stop ", 5);
-                    
-                    //Print some debugging output
-                    _display_padded_itoa(PR2, 4, temp);
-                    for(cntr=0; temp[cntr]; ++cntr)
-                    {
-                        display_content[0][cntr] = temp[cntr];
-                    }
-                    _display_padded_itoa(CCPR1L, 4, temp);
-                    for(cntr=0; temp[cntr]; ++cntr)
-                    {
-                        display_content[0][4+cntr] = temp[cntr];
-                    }
-                    _display_padded_itoa(T2CONbits.T2CKPS, 2, temp);
-                    for(cntr=0; temp[cntr]; ++cntr)
-                    {
-                        display_content[0][8+cntr] = temp[cntr];
-                    }
-                    
+                    memcpy(&display_content[3][0], "Stop ", 5); 
                     break;
             }
             
@@ -483,7 +480,7 @@ void display_prepare()
             }
                      
             //Write speed
-            _display_itoa(os.manual_speed, 2, temp);
+            _display_itoa(motor_get_maximum_speed(), 2, temp);
             space = 5-strlen(temp);
             for(cntr=0; temp[cntr]; ++cntr)
             {

@@ -194,6 +194,7 @@ void system_init(void)
     
     //Initialize variables
     os.displayState = DISPLAY_STATE_ARC2_CW;
+    os.displayState = DISPLAY_STATE_MANUAL_CW;
     os.busy = 0;
     os.current_position = 0;
     os.last_approach_direction = MOTOR_DIRECTION_CW;
@@ -204,10 +205,10 @@ void system_init(void)
     os.divide_position = 0;
     os.divide_jump_size = 1;
     os.arc_step_size = 100;
-    os.arc_size = 10;
+    os.arc_size = 20;
     os.arc_speed = 10;
     os.arc_direction = MOTOR_DIRECTION_CW;
-    os.manual_speed = 0;
+    os.manual_speed = 10;
     os.manual_direction = MOTOR_DIRECTION_CW;
 
     //Set up timer0 for timeSlots

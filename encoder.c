@@ -283,12 +283,12 @@ void encoder_statemachine(void)
                 //Run motor
                 if(distance_to_target<0)
                 {
-                    motor_run(MOTOR_DIRECTION_CCW, (uint16_t)(-distance_to_target));
+                    motor_run(MOTOR_DIRECTION_CCW, (uint16_t)(-distance_to_target), 0);
                     //motor_run(MOTOR_DIRECTION_CCW, (uint16_t)(200*os.divide_jump_size));
                 }
                 else
                 {
-                    motor_run(MOTOR_DIRECTION_CW, (uint16_t) distance_to_target);
+                    motor_run(MOTOR_DIRECTION_CW, (uint16_t) distance_to_target, 0);
                     //motor_run(MOTOR_DIRECTION_CW, (uint16_t)(200*os.divide_jump_size));
                 }    
                 //Set new divide position
@@ -368,7 +368,7 @@ void encoder_statemachine(void)
                 case DISPLAY_STATE_ARC2_CCW:
                     if(os.button2==1)
                     {
-                        motor_run(MOTOR_DIRECTION_CCW, os.arc_size);
+                        motor_run(MOTOR_DIRECTION_CCW, os.arc_size, os.arc_speed);
                     }
                     if(os.encoder2Count>0)
                         os.displayState = DISPLAY_STATE_ARC2_CANCEL;
@@ -384,7 +384,7 @@ void encoder_statemachine(void)
                 case DISPLAY_STATE_ARC2_CW:
                     if(os.button2==1)
                     {
-                        motor_run(MOTOR_DIRECTION_CW, os.arc_size);
+                        motor_run(MOTOR_DIRECTION_CW, os.arc_size, os.arc_speed);
                     }
                     if(os.encoder2Count<0)
                         os.displayState = DISPLAY_STATE_ARC2_CANCEL;
@@ -435,8 +435,7 @@ void encoder_statemachine(void)
                 case DISPLAY_STATE_MANUAL_CCW:
                     if(os.button2==1)
                     {  
-                        //to do: turn ccw
-                        motor_start(MOTOR_DIRECTION_CCW);
+                        motor_run(MOTOR_DIRECTION_CCW, 0xFF00, os.manual_speed);
                         os.displayState = DISPLAY_STATE_MANUAL_BUSY;
                     }
                     if(os.encoder2Count>0)
@@ -453,9 +452,9 @@ void encoder_statemachine(void)
                 case DISPLAY_STATE_MANUAL_CW:
                     if(os.button2==1)
                     {
-                        //to do: turn cw
-                        motor_start(MOTOR_DIRECTION_CW);
                         os.displayState = DISPLAY_STATE_MANUAL_BUSY;
+                        motor_run(MOTOR_DIRECTION_CW, 0xFF00, os.manual_speed);
+                        
                     }
                     if(os.encoder2Count<0)
                         os.displayState = DISPLAY_STATE_MANUAL_CANCEL;
@@ -463,7 +462,6 @@ void encoder_statemachine(void)
                 case DISPLAY_STATE_MANUAL_BUSY:
                     if(os.button2==1)
                     {
-                        //todo: turn motor off
                         motor_stop();
                         os.displayState = DISPLAY_STATE_MANUAL_CANCEL;
                     }

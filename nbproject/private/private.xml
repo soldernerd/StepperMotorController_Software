@@ -3,20 +3,10 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/os.h</file>
             <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/motor.h</file>
-            <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/system.c</file>
             <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/motor.c</file>
-            <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/display.h</file>
-            <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/os.c</file>
-            <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/i2c.h</file>
-            <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/display.c</file>
-            <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/encoder.h</file>
-            <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/system.h</file>
-            <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/main.c</file>
-            <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/encoder.c</file>
-            <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/i2c.c</file>
             <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/motor_config.h</file>
+            <file>file:/C:/Users/luke/OneDrive/EmbeddedSystems/MPLAB/RotaryTable/os.c</file>
         </group>
     </open-files>
 </project-private>

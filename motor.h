@@ -28,7 +28,7 @@
 //#define TIME_BASE 200000
 //#define MILLISECONDS_START 50
 //#define ACCELERATION_PERIOD 349
-#define MAXIMUM_SPEED 310
+#define MAXIMUM_SPEED 364
  
 typedef enum 
 {
@@ -40,14 +40,23 @@ typedef enum
 {
     MOTOR_MODE_START,
     MOTOR_MODE_RUN,
-    MOTOR_MODE_STOP
+    MOTOR_MODE_STOP,
+    MOTOR_MODE_MANUAL,
+    MOTOR_MODE_PWM
 }motorMode_t;
 
 void motor_init(void);
 void motor_isr(void);
-void motor_run(motorDirection_t direction, uint16_t distance);
+void motor_run(motorDirection_t direction, uint16_t distance, uint8_t speed);
 
 //Debugging functions
+motorMode_t motor_get_mode(void);
+uint16_t motor_get_current_speed(void);
+uint16_t motor_get_maximum_speed(void);
+
+//For the display
+uint16_t motor_speed_from_index(uint8_t speed_index);
+
 void startup(void);
 void motor_start(motorDirection_t direction);
 void motor_stop(void);
