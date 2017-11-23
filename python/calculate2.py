@@ -1,15 +1,38 @@
 import math
+import scipy.optimize
 
+j = 400000.0
 a = 80000.0
 
+def s_from_t(t):
+       t1 = a / j
+       if t <= t1:
+              return (1.0 / 6.0) * j * math.pow(t, 3)
+       else:
+              t2 = t - t1
+              v1 = (1.0 / 2.0) * j * math.pow(t1, 2)
+              s1 = (1.0 / 6.0) * j * math.pow(t1, 3)
+              s2 = v1 * t2
+              s3 = (1.0 / 2.0) * a * math.pow(t2, 2)
+              return s1 + s2 + s3
 
 def t_from_s(s):
-       t = math.sqrt(2.0*s/a)
-       return t
+       f = lambda t: s_from_t(t) - s
+       guess = math.sqrt(2.0*s/a)
+       return scipy.optimize.newton(f, guess, maxiter=500, tol=0.0000001)
 
 def f_from_t(t):
-       f = t * a
-       return f
+       #Correct this
+       #f = t * a
+       #return f
+       t1 = a / j
+       if t <= t1:
+              return (1.0 / 2.0) * j * math.pow(t, 2)
+       else:
+              t2 = t - t1
+              v1 = (1.0 / 2.0) * j * math.pow(t1, 2)
+              v2 = a * t2
+              return v1 + v2
 
 def params_from_f(f):
        div = 48000000.0 / (4.0 * f)

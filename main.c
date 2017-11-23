@@ -73,12 +73,23 @@ MAIN_RETURN main(void)
         if(!os.done)
         { 
             //Do this every time
-            //i2c_adc_start(I2C_ADC_RESOLUTION_14BIT, I2C_ADC_GAIN_1);
             APP_DeviceCustomHIDTasks();
             //Take care of state machine
             encoder_statemachine();
             display_prepare();
             display_update();
+            //Run any pending motor commands
+            motor_process_cue();
+            
+            //Take care of beep
+            if(os.beep_count)
+            {
+                --os.beep_count;
+                if(!os.beep_count)
+                {
+                    BUZZER_PIN = 0;
+                }
+            }
             
             //Run periodic tasks
             switch(os.timeSlot&0b00001111)

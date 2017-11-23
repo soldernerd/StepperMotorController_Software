@@ -200,7 +200,7 @@ void system_init(void)
     os.setup_step_size = 100;
     os.approach_direction = MOTOR_DIRECTION_CW;
     os.division = 36;
-    os.divide_step_size = 20;
+    os.divide_step_size = 10;
     os.divide_position = 0;
     os.divide_jump_size = 1;
     os.arc_step_size = 1000;
@@ -209,6 +209,7 @@ void system_init(void)
     os.arc_direction = MOTOR_DIRECTION_CW;
     os.manual_speed = 20;
     os.manual_direction = MOTOR_DIRECTION_CW;
+    os.beep_count = 0;
 
     //Set up timer0 for timeSlots
     _system_timer0_init();

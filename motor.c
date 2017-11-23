@@ -5,6 +5,10 @@
 #include "motor_config.h"
 #include "os.h"
 
+motorCommand_t motor_command_cue[MOTOR_COMMAND_CUE_SIZE];
+uint8_t motor_cue_read_index; 
+uint8_t motor_cue_write_index; 
+
 motorMode_t motor_mode;
 motorDirection_t motor_direction;
 uint16_t motor_maximum_speed;
@@ -13,6 +17,8 @@ volatile uint16_t motor_current_speed;
 volatile uint32_t motor_current_stepcount;
 volatile uint32_t motor_final_stepcount;
 volatile uint32_t motor_next_speed_check;
+
+static void _motor_run(motorDirection_t direction, uint16_t distance, uint16_t speed);
 
 motorMode_t motor_get_mode(void)
 {
@@ -29,13 +35,76 @@ uint16_t motor_get_current_speed(void)
     return motor_speed_lookup[motor_current_speed];
 }
 
-uint16_t motor_speed_from_index(uint8_t speed_index)
+uint16_t motor_speed_from_index(uint16_t speed_index)
 {
     return motor_speed_lookup[speed_index];
 }
 
+uint8_t motor_items_in_cue(void)
+{
+    return ((motor_cue_write_index-motor_cue_read_index) & MOTOR_COMMAND_CUE_MASK);
+}
+
+uint8_t motor_schedule_command(motorDirection_t direction, uint16_t distance, uint16_t speed)
+{
+    if((motor_items_in_cue()==0) && (os.busy==0))
+    {
+        //Cue is empty and motor is not busy
+        //Run command directly
+        _motor_run(direction, distance, speed);
+        //Indicate success
+        return 1;
+    }
+    if(motor_items_in_cue()==MOTOR_COMMAND_CUE_SIZE-1)
+    {
+        //Buffer is full
+        //Indicate an error
+        return 0;
+    }
+    else
+    {
+        //Add element
+        motor_command_cue[motor_cue_write_index].direction = direction;
+        motor_command_cue[motor_cue_write_index].distance = distance;
+        motor_command_cue[motor_cue_write_index].speed = speed;
+        //Increment write index
+        ++motor_cue_write_index;
+        //Indicate success
+        return 1;
+    }
+}
+
+void motor_process_cue(void)
+{
+    if(motor_items_in_cue()==0)
+    {
+        //Cue is empty, nothing to do
+        return;
+    }
+    else if(os.busy)
+    {
+        //Motor is busy, maybe next time
+        return;
+    }
+    else
+    {
+        //Run oldest command
+        _motor_run(
+            motor_command_cue[motor_cue_read_index].direction,
+            motor_command_cue[motor_cue_read_index].distance,
+            motor_command_cue[motor_cue_read_index].speed
+        );
+        //Inrement read index
+        ++motor_cue_read_index;
+    }
+}
+
 void motor_init(void)
 {
+    //Initialize variables
+    motor_cue_read_index = 0; 
+    motor_cue_write_index = 0;
+    
     //Initialize timer 2
     //Use timer2 for CCP1 module, timer 4 for CCP2 module
     TCLKCONbits.T3CCP2 = 0b0;
@@ -51,7 +120,7 @@ void motor_init(void)
     MOTOR_ENABLE_PIN = 0;
 }
 
-void motor_run(motorDirection_t direction, uint16_t distance, uint8_t speed)
+static void _motor_run(motorDirection_t direction, uint16_t distance, uint16_t speed)
 {
     //Save direction
     motor_direction = direction;
@@ -304,7 +373,7 @@ void motor_stop(void)
     motor_final_stepcount = motor_current_stepcount + motor_steps_lookup[motor_current_speed];
 }
 
-void motor_change_speed(uint8_t new_speed)
+void motor_change_speed(uint16_t new_speed)
 {
-    motor_maximum_speed = (uint16_t) new_speed;
+    motor_maximum_speed = new_speed;
 }

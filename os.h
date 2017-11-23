@@ -25,6 +25,9 @@
 #define PPS_FUNCTION_CCP1_OUTPUT 14
 #define PPS_FUNCTION_CCP2_OUTPUT 18
 
+#define BUZZER_ENABLE
+#define BEEP_DURATION 4
+
 //#define STEPPER_ENABLE_PIN TRISBbits.TRISB3
 //#define STEPPER_DIRECTION_PIN PORTBbits.RB2
 
@@ -167,10 +170,11 @@ typedef struct
     int16_t divide_jump_size;
     uint16_t arc_step_size;
     int32_t arc_size;
-    uint8_t arc_speed;
+    uint16_t arc_speed;
     motorDirection_t arc_direction;
-    uint8_t manual_speed;
+    uint16_t manual_speed;
     motorDirection_t manual_direction;
+    uint8_t beep_count;
 } os_t;
 
 
