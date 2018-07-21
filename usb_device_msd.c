@@ -24,7 +24,7 @@ please contact mla_licensing@microchip.com
 #include "system.h"
 #include "usb_config.h"
 
-#include <usb_device_msd.h>
+#include "usb_device_msd.h"
 
 #ifdef USB_USE_MSD
 

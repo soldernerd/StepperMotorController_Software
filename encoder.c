@@ -239,7 +239,7 @@ void encoder_statemachine(void)
                     {
                         motor_schedule_command(MOTOR_DIRECTION_CCW, OVERSHOOT, 0);
                         motor_schedule_command(MOTOR_DIRECTION_CW, OVERSHOOT, 0);
-                        os.approach_direction = MOTOR_DIRECTION_CCW;
+                        os.approach_direction = MOTOR_DIRECTION_CW;
                         os.displayState = DISPLAY_STATE_MAIN_SETUP;
                     }
                     if(os.encoder1Count+os.encoder2Count>0)

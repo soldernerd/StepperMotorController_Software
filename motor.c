@@ -159,9 +159,21 @@ static void _motor_run(motorDirection_t direction, uint16_t distance, uint16_t s
     //Set output pins
     MOTOR_ENABLE_PIN = 0; //Enable drive
     if(direction==MOTOR_DIRECTION_CCW)
-        MOTOR_DIRECTION_PIN = 0;
+    {
+        #ifdef MOTOR_INVERSE_DIRECTION
+            MOTOR_DIRECTION_PIN = 1;
+        #else
+            MOTOR_DIRECTION_PIN = 0;
+        #endif
+    }
     else
-        MOTOR_DIRECTION_PIN = 1;
+    {
+        #ifdef MOTOR_INVERSE_DIRECTION
+            MOTOR_DIRECTION_PIN = 0;
+        #else
+            MOTOR_DIRECTION_PIN = 1;
+        #endif
+    }
     
     //Set pin high. This is already the first step
     MOTOR_STEP_PIN = 1;
