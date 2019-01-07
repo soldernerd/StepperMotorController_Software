@@ -18,7 +18,7 @@ volatile uint32_t motor_current_stepcount;
 volatile uint32_t motor_final_stepcount;
 volatile uint32_t motor_next_speed_check;
 
-static void _motor_run(motorDirection_t direction, uint16_t distance, uint16_t speed);
+static void _motor_run(motorDirection_t direction, uint32_t distance_in_steps, uint16_t speed);
 
 motorMode_t motor_get_mode(void)
 {
@@ -45,13 +45,13 @@ uint8_t motor_items_in_cue(void)
     return ((motor_cue_write_index-motor_cue_read_index) & MOTOR_COMMAND_CUE_MASK);
 }
 
-uint8_t motor_schedule_command(motorDirection_t direction, uint16_t distance, uint16_t speed)
+uint8_t motor_schedule_command(motorDirection_t direction, uint32_t distance_in_steps, uint16_t speed)
 {
     if((motor_items_in_cue()==0) && (os.busy==0))
     {
         //Cue is empty and motor is not busy
         //Run command directly
-        _motor_run(direction, distance, speed);
+        _motor_run(direction, distance_in_steps, speed);
         //Indicate success
         return 1;
     }
@@ -65,7 +65,7 @@ uint8_t motor_schedule_command(motorDirection_t direction, uint16_t distance, ui
     {
         //Add element
         motor_command_cue[motor_cue_write_index].direction = direction;
-        motor_command_cue[motor_cue_write_index].distance = distance;
+        motor_command_cue[motor_cue_write_index].distance = distance_in_steps;
         motor_command_cue[motor_cue_write_index].speed = speed;
         //Increment write index
         ++motor_cue_write_index;
@@ -120,21 +120,21 @@ void motor_init(void)
     MOTOR_ENABLE_PIN = 0;
 }
 
-static void _motor_run(motorDirection_t direction, uint16_t distance, uint16_t speed)
+static void _motor_run(motorDirection_t direction, uint32_t distance_in_steps, uint16_t speed)
 {
     //Save direction
     motor_direction = direction;
     
     //Calculate distance
-    if(distance==0)
+    if(distance_in_steps==0)
     {
         //Essentially infinity. This will take a day to reach even at high speeds
         motor_final_stepcount = 0xFFFFFF00;
     }
     else
     {
-        motor_final_stepcount = distance;
-        motor_final_stepcount <<= FULL_STEP_SHIFT;
+        motor_final_stepcount = distance_in_steps;
+        //motor_final_stepcount <<= FULL_STEP_SHIFT;
     }
     
     //Maximum speed
@@ -177,16 +177,16 @@ static void _motor_run(motorDirection_t direction, uint16_t distance, uint16_t s
     
     //Set pin high. This is already the first step
     MOTOR_STEP_PIN = 1;
+    
     //Keep track of position
     ++motor_current_stepcount;
-    if((motor_current_stepcount&FULL_STEP_MASK)==0)
-    {
-        os.current_position += motor_direction;
-        if(os.current_position==36000)
-            os.current_position = 0;
-        if(os.current_position==0xFFFF)
-            os.current_position = 35999;
-    }
+    
+    //Calculate new position
+    os.current_position_in_steps += motor_direction;
+    if(os.current_position_in_steps==os.full_circle_in_steps)
+        os.current_position_in_steps = 0;
+    if(os.current_position_in_steps==0xFFFFFFFF)
+        os.current_position_in_steps = (os.full_circle_in_steps-1);
     
     //Manually control step
     PPSUnLock();
@@ -258,14 +258,13 @@ void motor_isr(void)
     }
     
     ++motor_current_stepcount;
-    if((motor_current_stepcount&FULL_STEP_MASK)==0)
-    {
-        os.current_position += motor_direction;
-        if(os.current_position==36000)
-            os.current_position = 0;
-        if(os.current_position==0xFFFF)
-            os.current_position = 35999;
-    }
+    
+    //Calculate new position
+    os.current_position_in_steps += motor_direction;
+    if(os.current_position_in_steps==os.full_circle_in_steps)
+        os.current_position_in_steps = 0;
+    if(os.current_position_in_steps==0xFFFFFFFF)
+        os.current_position_in_steps = (os.full_circle_in_steps-1);
     
     //Check if we need to (maybe) change speed.
     if(motor_current_stepcount==motor_next_speed_check)
@@ -369,14 +368,13 @@ void motor_isr(void)
         PIR1bits.TMR2IF = 0;
         //Keep track of position
         ++motor_current_stepcount;
-        if((motor_current_stepcount&FULL_STEP_MASK)==0)
-        {
-            os.current_position += motor_direction;
-            if(os.current_position==36000)
-                os.current_position = 0;
-            if(os.current_position==0xFFFF)
-                os.current_position = 35999;
-        }  
+        
+        //Calculate new position
+        os.current_position_in_steps += motor_direction;
+        if(os.current_position_in_steps==os.full_circle_in_steps)
+            os.current_position_in_steps = 0;
+        if(os.current_position_in_steps==0xFFFFFFFF)
+            os.current_position_in_steps = (os.full_circle_in_steps-1);
     }
 }
 

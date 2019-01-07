@@ -195,7 +195,8 @@ void system_init(void)
     //Initialize variables
     os.displayState = DISPLAY_STATE_MAIN_SETUP;
     os.busy = 0;
-    os.current_position = 0;
+    os.current_position_in_steps = 0;
+    os.full_circle_in_steps = 576000; //360 * 100 * 16
     os.last_approach_direction = MOTOR_DIRECTION_CW;
     os.setup_step_size = 100;
     os.approach_direction = MOTOR_DIRECTION_CW;

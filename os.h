@@ -25,7 +25,7 @@
 #define PPS_FUNCTION_CCP1_OUTPUT 14
 #define PPS_FUNCTION_CCP2_OUTPUT 18
 
-#define BUZZER_ENABLE
+//#define BUZZER_ENABLE
 #define BEEP_DURATION 4
 
 //#define STEPPER_ENABLE_PIN TRISBbits.TRISB3
@@ -158,7 +158,9 @@ typedef struct
     volatile int8_t button1;
     volatile int8_t encoder2Count;
     volatile int8_t button2;
-    volatile uint16_t current_position;
+    volatile uint32_t current_position_in_steps;
+    uint32_t full_circle_in_steps;
+    uint16_t current_position_in_degrees;
     displayState_t displayState;
     uint8_t busy;
     motorDirection_t last_approach_direction;

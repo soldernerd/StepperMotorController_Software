@@ -50,6 +50,7 @@ static void _calculate_s_value(void);
 MAIN_RETURN main(void)
 { 
     uint8_t startup_timer;
+    float tmp;
     //uint16_t stepper_count = 0;
     //uint8_t direction = 0;
     SYSTEM_Initialize(SYSTEM_STATE_USB_START);
@@ -76,6 +77,20 @@ MAIN_RETURN main(void)
             APP_DeviceCustomHIDTasks();
             //Take care of state machine
             encoder_statemachine();
+            
+            //Calculate position in 0.01 degrees
+            tmp = (float) os.current_position_in_steps;
+            tmp *= 36000;
+            tmp /= os.full_circle_in_steps;
+            tmp += 0.5; //Round correctly
+            os.current_position_in_degrees = (uint16_t) tmp;
+            if(os.current_position_in_degrees==36000)
+            {
+                //Due to rounding, this might happen under certain conditions...
+                os.current_position_in_degrees = 0;
+            }
+                  
+            
             display_prepare();
             display_update();
             //Run any pending motor commands

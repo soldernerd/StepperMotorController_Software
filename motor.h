@@ -56,7 +56,7 @@ typedef enum
 typedef struct
 {
     motorDirection_t direction;
-    uint16_t distance;
+    uint32_t distance;
     uint16_t speed;
 } motorCommand_t;
 
@@ -80,7 +80,7 @@ void motor_stop(void);
 void motor_change_speed(uint16_t new_speed);
 
 //Main tools
-uint8_t motor_schedule_command(motorDirection_t direction, uint16_t distance, uint16_t speed);
+uint8_t motor_schedule_command(motorDirection_t direction, uint32_t distance_in_steps, uint16_t speed);
 void motor_process_cue(void);
 uint8_t motor_items_in_cue(void);
 

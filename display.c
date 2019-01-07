@@ -46,7 +46,7 @@ const char dc_setup2[4][20] = {DISPLAY_SETUP2_0, DISPLAY_SETUP2_1, DISPLAY_SETUP
 #define DISPLAY_DIVIDE1_3 {'1','2','3','4',' ',' ',' ',' ',' ',' ',DISPLAY_CC_VERTICALBAR_ADDRESS,' ',' ','C','a','n','c','e','l',' '}
 const char dc_divide1[4][20] = {DISPLAY_DIVIDE1_0, DISPLAY_DIVIDE1_1, DISPLAY_DIVIDE1_2, DISPLAY_DIVIDE1_3};
 #define DISPLAY_DIVIDE2_0 {'D','i','v','i','d','e',':',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
-#define DISPLAY_DIVIDE2_1 {'C','u','r','r','e','n','t',' ','p','o','s',':',' ',' ',' ',' ',' ',' ',' ',' '}
+#define DISPLAY_DIVIDE2_1 {'P','o','s',':',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
 #define DISPLAY_DIVIDE2_2 {'J','u','m','p',' ','s','i','z','e',':',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
 #define DISPLAY_DIVIDE2_3 {'P','r','e','s','s','T','o','J','u','m','p',' ',DISPLAY_CC_VERTICALBAR_ADDRESS,' ','C','a','n','c','e','l'}
 const char dc_divide2[4][20] = {DISPLAY_DIVIDE2_0, DISPLAY_DIVIDE2_1, DISPLAY_DIVIDE2_2, DISPLAY_DIVIDE2_3};
@@ -338,12 +338,22 @@ void display_prepare()
                 display_content[0][cntr+10] = 'C';
                 display_content[0][cntr+11] = 'W'; 
             }
-            //Display current position
+            //Display current position (integer division position)
             _display_padded_itoa(os.divide_position, 0, temp);
             for(cntr=0; temp[cntr]; ++cntr)
             {
-                display_content[1][cntr+13] = temp[cntr];
+                display_content[1][cntr+5] = temp[cntr];
             }
+            //Write current position (in degrees)
+            display_content[1][cntr+6] = '(';
+            space = cntr + 7;
+            _display_itoa_long(os.current_position_in_degrees, 2, temp);
+            for(cntr=0; temp[cntr]; ++cntr)
+            {
+                display_content[1][cntr+space] = temp[cntr];
+            }
+            display_content[1][cntr+space] = DISPLAY_CC_DEGREE_ADDRESS;
+            display_content[1][cntr+space+1] = ')';
             //Display jump size
             _display_signed_itoa(os.divide_jump_size, temp);
             for(cntr=0; temp[cntr]; ++cntr)
@@ -409,7 +419,7 @@ void display_prepare()
             display_content[0][10+cntr] = DISPLAY_CC_DEGREE_ADDRESS;
             
             //Write current position
-            _display_itoa_long(os.current_position, 2, temp);
+            _display_itoa_long(os.current_position_in_degrees, 2, temp);
             space = 6-strlen(temp);
             for(cntr=0; temp[cntr]; ++cntr)
             {
@@ -429,7 +439,7 @@ void display_prepare()
             memcpy(display_content, dc_zero, sizeof display_content);
             
             //Write current position
-            _display_itoa_long(os.current_position, 2, temp);
+            _display_itoa_long(os.current_position_in_degrees, 2, temp);
             for(cntr=0; temp[cntr]; ++cntr)
             {
                 display_content[1][13+cntr] = temp[cntr];
@@ -457,7 +467,7 @@ void display_prepare()
             }
             
             //Write current position
-            _display_itoa_long(os.current_position, 2, temp);
+            _display_itoa_long(os.current_position_in_degrees, 2, temp);
             space = 7-strlen(temp);
             for(cntr=0; temp[cntr]; ++cntr)
             {
