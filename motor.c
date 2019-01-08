@@ -25,19 +25,36 @@ motorMode_t motor_get_mode(void)
     return motor_mode;
 }
 
+uint16_t _motor_get_speed_in_degrees(uint16_t speed_index)
+{
+    uint32_t lookup;
+    float speed;
+    
+    lookup = motor_speed_lookup[speed_index];
+    lookup *= 16;
+    lookup *= 360;
+    lookup *= 100;
+    
+    speed = (float) lookup;
+    speed /= config.full_circle_in_steps;
+    speed += 0.5;
+    
+    return (uint16_t) speed;
+}
+
 uint16_t motor_get_maximum_speed(void)
 {
-    return motor_speed_lookup[motor_maximum_speed];
+    return _motor_get_speed_in_degrees(motor_maximum_speed);
 }
 
 uint16_t motor_get_current_speed(void)
 {
-    return motor_speed_lookup[motor_current_speed];
+    return _motor_get_speed_in_degrees(motor_current_speed);
 }
 
 uint16_t motor_speed_from_index(uint16_t speed_index)
 {
-    return motor_speed_lookup[speed_index];
+    return _motor_get_speed_in_degrees(speed_index);
 }
 
 uint8_t motor_items_in_cue(void)
@@ -140,7 +157,7 @@ static void _motor_run(motorDirection_t direction, uint32_t distance_in_steps, u
     //Maximum speed
     if(speed==0)
     {
-        motor_maximum_speed = MAXIMUM_SPEED;
+        motor_maximum_speed = config.maximum_speed;
     }
     else
     {
@@ -160,19 +177,17 @@ static void _motor_run(motorDirection_t direction, uint32_t distance_in_steps, u
     MOTOR_ENABLE_PIN = 0; //Enable drive
     if(direction==MOTOR_DIRECTION_CCW)
     {
-        #ifdef MOTOR_INVERSE_DIRECTION
+        if(config.inverse_direction)
             MOTOR_DIRECTION_PIN = 1;
-        #else
+        else
             MOTOR_DIRECTION_PIN = 0;
-        #endif
     }
     else
     {
-        #ifdef MOTOR_INVERSE_DIRECTION
+        if(config.inverse_direction)
             MOTOR_DIRECTION_PIN = 0;
-        #else
+        else
             MOTOR_DIRECTION_PIN = 1;
-        #endif
     }
     
     //Set pin high. This is already the first step
@@ -183,10 +198,10 @@ static void _motor_run(motorDirection_t direction, uint32_t distance_in_steps, u
     
     //Calculate new position
     os.current_position_in_steps += motor_direction;
-    if(os.current_position_in_steps==os.full_circle_in_steps)
+    if(os.current_position_in_steps==config.full_circle_in_steps)
         os.current_position_in_steps = 0;
     if(os.current_position_in_steps==0xFFFFFFFF)
-        os.current_position_in_steps = (os.full_circle_in_steps-1);
+        os.current_position_in_steps = (config.full_circle_in_steps-1);
     
     //Manually control step
     PPSUnLock();
@@ -261,10 +276,10 @@ void motor_isr(void)
     
     //Calculate new position
     os.current_position_in_steps += motor_direction;
-    if(os.current_position_in_steps==os.full_circle_in_steps)
+    if(os.current_position_in_steps==config.full_circle_in_steps)
         os.current_position_in_steps = 0;
     if(os.current_position_in_steps==0xFFFFFFFF)
-        os.current_position_in_steps = (os.full_circle_in_steps-1);
+        os.current_position_in_steps = (config.full_circle_in_steps-1);
     
     //Check if we need to (maybe) change speed.
     if(motor_current_stepcount==motor_next_speed_check)
@@ -371,10 +386,10 @@ void motor_isr(void)
         
         //Calculate new position
         os.current_position_in_steps += motor_direction;
-        if(os.current_position_in_steps==os.full_circle_in_steps)
+        if(os.current_position_in_steps==config.full_circle_in_steps)
             os.current_position_in_steps = 0;
         if(os.current_position_in_steps==0xFFFFFFFF)
-            os.current_position_in_steps = (os.full_circle_in_steps-1);
+            os.current_position_in_steps = (config.full_circle_in_steps-1);
     }
 }
 

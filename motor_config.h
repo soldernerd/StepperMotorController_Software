@@ -1962,6 +1962,7 @@ const uint8_t motor_postscaler_lookup[487] =
     0 /*i=486*/
 };
 
+
 const uint16_t motor_speed_lookup[487] =
 {
     8, /*i=0*/
@@ -2452,4 +2453,5 @@ const uint16_t motor_speed_lookup[487] =
     3731, /*i=485*/
     3750 /*i=486*/
 };
+
 

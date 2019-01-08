@@ -6,6 +6,7 @@
 #include "i2c.h"
 #include "encoder.h"
 #include "motor.h"
+//#include "fat16.h" //Only for Revision B
 
 
 // 1ms
@@ -178,6 +179,9 @@ void system_init(void)
     //Configure all pins as inputs/outputs analog/digital as needed
     _system_pin_setup();
     
+    //Initialize file system
+    //fat_init(); //Need external flash drive for this, so only for revision B
+    
     //Initialize encoders
     encoder_init();
     
@@ -196,7 +200,6 @@ void system_init(void)
     os.displayState = DISPLAY_STATE_MAIN_SETUP;
     os.busy = 0;
     os.current_position_in_steps = 0;
-    os.full_circle_in_steps = 576000; //360 * 100 * 16
     os.last_approach_direction = MOTOR_DIRECTION_CW;
     os.setup_step_size = 100;
     os.approach_direction = MOTOR_DIRECTION_CW;
@@ -206,11 +209,20 @@ void system_init(void)
     os.divide_jump_size = 1;
     os.arc_step_size = 1000;
     os.arc_size = 1000;
-    os.arc_speed = 20;
+    os.arc_speed = CONFIG_INITIAL_SPEED_ARC;
     os.arc_direction = MOTOR_DIRECTION_CW;
-    os.manual_speed = 20;
+    os.manual_speed = CONFIG_INITIAL_SPEED_MANUAL;
     os.manual_direction = MOTOR_DIRECTION_CW;
     os.beep_count = 0;
+
+    config.full_circle_in_steps = CONFIG_FULL_CIRCLE_IN_STEPS;
+    config.inverse_direction = CONFIG_INVERSE_DIRECTION;
+    config.overshoot_in_steps = CONFIG_OVERSHOOT_IN_STEPS;
+    config.minimum_speed = CONFIG_MINIMUM_SPEED;
+    config.maximum_speed = CONFIG_MAXIMUM_SPEED;
+    config.maximum_speed_arc = CONFIG_MAXIMUM_SPEED_ARC;
+    config.maximum_speed_manual = CONFIG_MAXIMUM_SPEED_MANUAL;
+    config.beep_duration = CONFIG_BEEP_DURATION;
 
     //Set up timer0 for timeSlots
     _system_timer0_init();

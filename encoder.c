@@ -31,10 +31,11 @@ void encoder_run(void)
             if(os.encoder1Count<COUNT_MAX)
             {
                 ++os.encoder1Count;
-                #ifdef BUZZER_ENABLE
+                if(config.beep_duration)
+                {
                     BUZZER_PIN = 1;
-                    os.beep_count = BEEP_DURATION;
-                #endif /*BUZZER_ENABLE*/
+                    os.beep_count = config.beep_duration; 
+                }
             }
         }
         //A rising while B high -> -
@@ -43,20 +44,22 @@ void encoder_run(void)
             if(os.encoder1Count>COUNT_MIN)
             {
                 --os.encoder1Count;
-                #ifdef BUZZER_ENABLE
+                if(config.beep_duration)
+                {
                     BUZZER_PIN = 1;
-                    os.beep_count = BEEP_DURATION;
-                #endif /*BUZZER_ENABLE*/
+                    os.beep_count = config.beep_duration; 
+                }
             }
         }
         //Pushbutton pressed
         if(ENCODER1_PB_PIN && (!(enc1&ENCODER1_PB_MASK)))
         {
             os.button1 = 1;
-            #ifdef BUZZER_ENABLE
+            if(config.beep_duration)
+            {
                 BUZZER_PIN = 1;
-                os.beep_count = BEEP_DURATION;
-            #endif /*BUZZER_ENABLE*/
+                os.beep_count = config.beep_duration; 
+            }
         }
         //Pushbutton released
         if((!ENCODER1_PB_PIN) && (enc1&ENCODER1_PB_MASK))
@@ -75,10 +78,11 @@ void encoder_run(void)
             if(os.encoder2Count<COUNT_MAX)
             {
                 ++os.encoder2Count;
-                #ifdef BUZZER_ENABLE
+                if(config.beep_duration)
+                {
                     BUZZER_PIN = 1;
-                    os.beep_count = BEEP_DURATION;
-                #endif /*BUZZER_ENABLE*/
+                    os.beep_count = config.beep_duration; 
+                }
             }
         }
         //A rising while B high -> -
@@ -87,20 +91,22 @@ void encoder_run(void)
             if(os.encoder2Count>COUNT_MIN)
             {
                 --os.encoder2Count;
-                #ifdef BUZZER_ENABLE
+                if(config.beep_duration)
+                {
                     BUZZER_PIN = 1;
-                    os.beep_count = BEEP_DURATION;
-                #endif /*BUZZER_ENABLE*/
+                    os.beep_count = config.beep_duration; 
+                }
             }
         }
         //Pushbutton pressed
         if(ENCODER2_PB_PIN && (!(enc2&ENCODER2_PB_MASK)))
         {
             os.button2 = 1;
-            #ifdef BUZZER_ENABLE
+            if(config.beep_duration)
+            {
                 BUZZER_PIN = 1;
-                os.beep_count = BEEP_DURATION;
-            #endif /*BUZZER_ENABLE*/
+                os.beep_count = config.beep_duration; 
+            }
         }
         //Pushbutton released
         if((!ENCODER2_PB_PIN) && (enc2&ENCODER2_PB_MASK))
@@ -224,8 +230,8 @@ void encoder_statemachine(void)
                 case DISPLAY_STATE_SETUP2_CCW:
                     if(os.button1==1 || os.button2==1)
                     {
-                        motor_schedule_command(MOTOR_DIRECTION_CW, OVERSHOOT, 0);
-                        motor_schedule_command(MOTOR_DIRECTION_CCW, OVERSHOOT, 0);
+                        motor_schedule_command(MOTOR_DIRECTION_CW, config.overshoot_in_steps, 0);
+                        motor_schedule_command(MOTOR_DIRECTION_CCW, config.overshoot_in_steps, 0);
                         os.approach_direction = MOTOR_DIRECTION_CCW;
                         os.displayState = DISPLAY_STATE_MAIN_SETUP;
                     }
@@ -237,8 +243,8 @@ void encoder_statemachine(void)
                 case DISPLAY_STATE_SETUP2_CW:
                     if(os.button1==1 || os.button2==1)
                     {
-                        motor_schedule_command(MOTOR_DIRECTION_CCW, OVERSHOOT, 0);
-                        motor_schedule_command(MOTOR_DIRECTION_CW, OVERSHOOT, 0);
+                        motor_schedule_command(MOTOR_DIRECTION_CCW, config.overshoot_in_steps, 0);
+                        motor_schedule_command(MOTOR_DIRECTION_CW, config.overshoot_in_steps, 0);
                         os.approach_direction = MOTOR_DIRECTION_CW;
                         os.displayState = DISPLAY_STATE_MAIN_SETUP;
                     }
@@ -314,17 +320,17 @@ void encoder_statemachine(void)
                 }
 
                 //Calculate target position in terms of steps
-                tmp = (float) os.full_circle_in_steps;
+                tmp = (float) config.full_circle_in_steps;
                 tmp *= target_divide_position;
                 tmp /= os.division;
                 target_position_in_steps = (uint32_t) tmp;
                 
                 //Calculate distance to target
                 distance_to_target_in_steps = target_position_in_steps - os.current_position_in_steps;
-                if(distance_to_target_in_steps>(os.full_circle_in_steps>>1))
-                    distance_to_target_in_steps -= os.full_circle_in_steps;
-                if(distance_to_target_in_steps<-((int32_t)(os.full_circle_in_steps>>1)))
-                    distance_to_target_in_steps += os.full_circle_in_steps;
+                if(distance_to_target_in_steps>(config.full_circle_in_steps>>1))
+                    distance_to_target_in_steps -= config.full_circle_in_steps;
+                if(distance_to_target_in_steps<-((int32_t)(config.full_circle_in_steps>>1)))
+                    distance_to_target_in_steps += config.full_circle_in_steps;
                 
                 //Run motor
                 if(distance_to_target_in_steps<0)
@@ -335,8 +341,8 @@ void encoder_statemachine(void)
                     }
                     else
                     {
-                        motor_schedule_command(MOTOR_DIRECTION_CCW, ((uint32_t)(-distance_to_target_in_steps))+OVERSHOOT, 0);
-                        motor_schedule_command(MOTOR_DIRECTION_CW, OVERSHOOT, 0);
+                        motor_schedule_command(MOTOR_DIRECTION_CCW, ((uint32_t)(-distance_to_target_in_steps))+config.overshoot_in_steps, 0);
+                        motor_schedule_command(MOTOR_DIRECTION_CW, config.overshoot_in_steps, 0);
                     }
                 }
                 else
@@ -347,8 +353,8 @@ void encoder_statemachine(void)
                     }
                     else
                     {
-                        motor_schedule_command(MOTOR_DIRECTION_CW, (uint32_t) distance_to_target_in_steps+OVERSHOOT, 0);
-                        motor_schedule_command(MOTOR_DIRECTION_CCW, OVERSHOOT, 0);
+                        motor_schedule_command(MOTOR_DIRECTION_CW, (uint32_t) distance_to_target_in_steps+config.overshoot_in_steps, 0);
+                        motor_schedule_command(MOTOR_DIRECTION_CCW, config.overshoot_in_steps, 0);
                     }
                 }    
                 //Set new divide position
@@ -415,14 +421,14 @@ void encoder_statemachine(void)
         case DISPLAY_STATE_ARC2:
             if(os.encoder1Count>0)
             {
-                if(os.arc_speed<MAXIMUM_SPEED_ARC)
+                if(os.arc_speed<config.maximum_speed_arc)
                     ++os.arc_speed;
                 if(os.busy)
                     motor_change_speed(os.arc_speed);
             }
             if(os.encoder1Count<0)
             {
-                if(os.arc_speed>MINIMUM_SPEED)
+                if(os.arc_speed>config.minimum_speed)
                     --os.arc_speed;
                 if(os.busy)
                     motor_change_speed(os.arc_speed);
@@ -433,7 +439,7 @@ void encoder_statemachine(void)
                     if(os.button2==1)
                     {
                         tmp = (float) os.arc_size;
-                        tmp *= os.full_circle_in_steps;
+                        tmp *= config.full_circle_in_steps;
                         tmp /= 36000;
                         motor_schedule_command(MOTOR_DIRECTION_CCW, (uint32_t ) tmp, os.arc_speed);
                         os.displayState = DISPLAY_STATE_ARC2_CANCEL;
@@ -457,7 +463,7 @@ void encoder_statemachine(void)
                     if(os.button2==1)
                     {
                         tmp = (float) os.arc_size;
-                        tmp *= os.full_circle_in_steps;
+                        tmp *= config.full_circle_in_steps;
                         tmp /= 36000;
                         motor_schedule_command(MOTOR_DIRECTION_CW, (uint32_t ) tmp, os.arc_speed);
                         os.displayState = DISPLAY_STATE_ARC2_CANCEL;
@@ -476,7 +482,7 @@ void encoder_statemachine(void)
                 {
                     //do nothing
                 }
-                else if(os.current_position_in_steps<=(os.full_circle_in_steps>>1))
+                else if(os.current_position_in_steps<=(config.full_circle_in_steps>>1))
                 {
                     if(os.approach_direction==MOTOR_DIRECTION_CCW)
                     {
@@ -484,20 +490,20 @@ void encoder_statemachine(void)
                     }
                     else
                     {
-                        motor_schedule_command(MOTOR_DIRECTION_CCW, os.current_position_in_steps+OVERSHOOT, 0);
-                        motor_schedule_command(MOTOR_DIRECTION_CW, OVERSHOOT, 0);
+                        motor_schedule_command(MOTOR_DIRECTION_CCW, os.current_position_in_steps+config.overshoot_in_steps, 0);
+                        motor_schedule_command(MOTOR_DIRECTION_CW, config.overshoot_in_steps, 0);
                     }
                 }
                 else
                 {
                     if(os.approach_direction==MOTOR_DIRECTION_CW)
                     {
-                        motor_schedule_command(MOTOR_DIRECTION_CW, ((os.full_circle_in_steps>>1)-os.current_position_in_steps), 0);
+                        motor_schedule_command(MOTOR_DIRECTION_CW, ((config.full_circle_in_steps>>1)-os.current_position_in_steps), 0);
                     }
                     else
                     {
-                        motor_schedule_command(MOTOR_DIRECTION_CW, ((os.full_circle_in_steps>>1)+OVERSHOOT-os.current_position_in_steps), 0);
-                        motor_schedule_command(MOTOR_DIRECTION_CCW, OVERSHOOT, 0);
+                        motor_schedule_command(MOTOR_DIRECTION_CW, ((config.full_circle_in_steps>>1)+config.overshoot_in_steps-os.current_position_in_steps), 0);
+                        motor_schedule_command(MOTOR_DIRECTION_CCW, config.overshoot_in_steps, 0);
                     }
                 }
                 os.displayState = DISPLAY_STATE_MAIN_ZERO;
@@ -510,7 +516,7 @@ void encoder_statemachine(void)
         case DISPLAY_STATE_MANUAL:
             if(os.encoder1Count>0)
             {
-                if(os.manual_speed<MAXIMUM_SPEED_MANUAL)
+                if(os.manual_speed<config.maximum_speed_manual)
                 {
                     ++os.manual_speed;
                     motor_change_speed(os.manual_speed);
@@ -519,7 +525,7 @@ void encoder_statemachine(void)
             }
             if(os.encoder1Count<0)
             {
-                if(os.manual_speed>MINIMUM_SPEED)
+                if(os.manual_speed>config.minimum_speed)
                 {
                     --os.manual_speed;
                     motor_change_speed(os.manual_speed);

@@ -12,6 +12,38 @@
 #include "motor.h"
 
 /*
+ * Application configuration
+ */
+
+#define ROTARY_TABLE_4_16
+
+#ifdef ROTARY_TABLE_180_16
+    #define CONFIG_FULL_CIRCLE_IN_STEPS 576000
+    #define CONFIG_INVERSE_DIRECTION 1
+    #define CONFIG_OVERSHOOT_IN_STEPS 6400
+    #define CONFIG_MINIMUM_SPEED 1
+    #define CONFIG_MAXIMUM_SPEED 380
+    #define CONFIG_INITIAL_SPEED_ARC 30
+    #define CONFIG_MAXIMUM_SPEED_ARC 305
+    #define CONFIG_INITIAL_SPEED_MANUAL 30
+    #define CONFIG_MAXIMUM_SPEED_MANUAL 305
+    #define CONFIG_BEEP_DURATION 0
+#endif /*ROTARY_TABLE_180_16*/
+
+#ifdef ROTARY_TABLE_4_16
+    #define CONFIG_FULL_CIRCLE_IN_STEPS 12800
+    #define CONFIG_INVERSE_DIRECTION 1
+    #define CONFIG_OVERSHOOT_IN_STEPS 160
+    #define CONFIG_MINIMUM_SPEED 1
+    #define CONFIG_MAXIMUM_SPEED 300
+    #define CONFIG_INITIAL_SPEED_ARC 10
+    #define CONFIG_MAXIMUM_SPEED_ARC 200
+    #define CONFIG_INITIAL_SPEED_MANUAL 10
+    #define CONFIG_MAXIMUM_SPEED_MANUAL 200
+    #define CONFIG_BEEP_DURATION 0
+#endif /*ROTARY_TABLE_4_16*/
+
+/*
  * General definitions
  */
 
@@ -24,9 +56,6 @@
 
 #define PPS_FUNCTION_CCP1_OUTPUT 14
 #define PPS_FUNCTION_CCP2_OUTPUT 18
-
-//#define BUZZER_ENABLE
-#define BEEP_DURATION 4
 
 //#define STEPPER_ENABLE_PIN TRISBbits.TRISB3
 //#define STEPPER_DIRECTION_PIN PORTBbits.RB2
@@ -159,7 +188,6 @@ typedef struct
     volatile int8_t encoder2Count;
     volatile int8_t button2;
     volatile uint32_t current_position_in_steps;
-    uint32_t full_circle_in_steps;
     uint16_t current_position_in_degrees;
     displayState_t displayState;
     uint8_t busy;
@@ -179,12 +207,27 @@ typedef struct
     uint8_t beep_count;
 } os_t;
 
+typedef struct
+{
+    uint32_t full_circle_in_steps;
+    uint8_t inverse_direction;
+    uint16_t overshoot_in_steps;
+    uint16_t minimum_speed;
+    uint16_t maximum_speed;
+    uint16_t initial_speed_arc;
+    uint16_t maximum_speed_arc;
+    uint16_t initial_speed_manual;
+    uint16_t maximum_speed_manual;
+    uint8_t beep_duration;
+} config_t;
+
 
 /*
  * Global variables
  */
 
 os_t os;
+config_t config;
 
 
 /*

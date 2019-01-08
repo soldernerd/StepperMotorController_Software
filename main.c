@@ -20,13 +20,13 @@
 #include "app_device_custom_hid.h"
 #include "app_device_msd.h"
 
-
 //User defined code
 #include "os.h"
 #include "encoder.h"
 #include "i2c.h"
 #include "display.h"
 #include "motor.h"
+
 
 static void _calculate_adc_sum(void);
 static void _calculate_db_value(void);
@@ -81,7 +81,7 @@ MAIN_RETURN main(void)
             //Calculate position in 0.01 degrees
             tmp = (float) os.current_position_in_steps;
             tmp *= 36000;
-            tmp /= os.full_circle_in_steps;
+            tmp /= config.full_circle_in_steps;
             tmp += 0.5; //Round correctly
             os.current_position_in_degrees = (uint16_t) tmp;
             if(os.current_position_in_degrees==36000)
