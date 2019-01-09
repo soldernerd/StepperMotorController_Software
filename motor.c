@@ -25,6 +25,21 @@ motorMode_t motor_get_mode(void)
     return motor_mode;
 }
 
+//Translate 0.01 degrees into steps
+uint32_t motor_steps_from_degrees(uint16_t degrees)
+{
+    float steps;
+    uint32_t retval;
+    steps = (float) degrees;
+    steps *= config.full_circle_in_steps;
+    steps /= 36000;
+    steps += 0.5;
+    retval = (uint32_t) steps;
+    if(retval==0)
+        retval = 1;
+    return retval;
+}
+
 uint16_t _motor_get_speed_in_degrees(uint16_t speed_index)
 {
     uint32_t lookup;

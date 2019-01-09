@@ -58,7 +58,7 @@ const char dc_arc1[4][20] = {DISPLAY_ARC1_0, DISPLAY_ARC1_1, DISPLAY_ARC1_2, DIS
 #define DISPLAY_ARC2_0 {'A','r','c',':',' ','S','i','z','e','=',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
 #define DISPLAY_ARC2_1 {'C','u','r','r','e','n','t',' ','p','o','s',':',' ',' ',' ',' ',' ',' ',' ',DISPLAY_CC_DEGREE_ADDRESS}
 #define DISPLAY_ARC2_2 {'T','u','r','n',' ','C','C','W',' ',DISPLAY_CC_VERTICALBAR_ADDRESS,' ','S','p','e','e','d',' ',' ',' ',' '}
-#define DISPLAY_ARC2_3 {'S','t','a','r','t',' ',' ',' ',' ',DISPLAY_CC_VERTICALBAR_ADDRESS,' ',' ',' ',' ',' ',' ',DISPLAY_CC_DEGREE_ADDRESS,'/','s',' '}
+#define DISPLAY_ARC2_3 {'S','t','a','r','t',' ',' ',' ',' ',DISPLAY_CC_VERTICALBAR_ADDRESS,' ',' ',' ',' ',' ',' ',' ',' ',' ',' '}
 const char dc_arc2[4][20] = {DISPLAY_ARC2_0, DISPLAY_ARC2_1, DISPLAY_ARC2_2, DISPLAY_ARC2_3};
 #define DISPLAY_ZERO_0 {'R','e','t','u','r','n',' ','t','o',' ','Z','e','r','o','?',' ',' ',' ',' ',' '}
 #define DISPLAY_ZERO_1 {'C','u','r','r','e','n','t',' ','p','o','s',':',' ',' ',' ',' ',' ',' ',' ',' '}
@@ -68,7 +68,7 @@ const char dc_zero[4][20] = {DISPLAY_ZERO_0, DISPLAY_ZERO_1, DISPLAY_ZERO_2, DIS
 #define DISPLAY_MANUAL_0 {'M','a','n','u','a','l',' ','M','o','d','e',' ',' ',' ',' ',' ',' ',' ',' ',' '}
 #define DISPLAY_MANUAL_1 {'C','u','r','r','e','n','t',' ','p','o','s',':',' ',' ',' ',' ',' ',' ',' ',DISPLAY_CC_DEGREE_ADDRESS}
 #define DISPLAY_MANUAL_2 {'T','u','r','n',' ','C','C','W',' ',DISPLAY_CC_VERTICALBAR_ADDRESS,' ','S','p','e','e','d',' ',' ',' ',' '}
-#define DISPLAY_MANUAL_3 {'S','t','a','r','t',' ',' ',' ',' ',DISPLAY_CC_VERTICALBAR_ADDRESS, ' ',' ',' ',' ',' ',DISPLAY_CC_DEGREE_ADDRESS,'/','s',' ', ' '}
+#define DISPLAY_MANUAL_3 {'S','t','a','r','t',' ',' ',' ',' ',DISPLAY_CC_VERTICALBAR_ADDRESS, ' ',' ',' ',' ',' ',' ',' ',' ',' ', ' '}
 const char dc_manual[4][20] = {DISPLAY_MANUAL_0, DISPLAY_MANUAL_1, DISPLAY_MANUAL_2, DISPLAY_MANUAL_3};
 
 static void _display_clear(void);
@@ -428,11 +428,18 @@ void display_prepare()
             
             //Write speed
             _display_itoa(motor_speed_from_index(os.arc_speed), 2, temp);
-            space = 5-strlen(temp);
             for(cntr=0; temp[cntr]; ++cntr)
             {
-                display_content[3][10+space+cntr] = temp[cntr];
+                display_content[3][11+cntr] = temp[cntr];
             }
+            display_content[3][11+cntr] = DISPLAY_CC_DEGREE_ADDRESS;
+            display_content[3][12+cntr] = '/';
+            display_content[3][13+cntr] = 's';
+//            space = 5-strlen(temp);
+//            for(cntr=0; temp[cntr]; ++cntr)
+//            {
+//                display_content[3][10+space+cntr] = temp[cntr];
+//            }
             break;
             
         case DISPLAY_STATE_ZERO:    
@@ -476,11 +483,13 @@ void display_prepare()
                      
             //Write speed
             _display_itoa(motor_speed_from_index(os.manual_speed), 2, temp);
-            space = 5-strlen(temp);
             for(cntr=0; temp[cntr]; ++cntr)
             {
-                display_content[3][10+space+cntr] = temp[cntr];
+                display_content[3][11+cntr] = temp[cntr];
             }
+            display_content[3][11+cntr] = DISPLAY_CC_DEGREE_ADDRESS;
+            display_content[3][12+cntr] = '/';
+            display_content[3][13+cntr] = 's';
             break;
             
         case DISPLAY_STATE_ENCODER_TEST:

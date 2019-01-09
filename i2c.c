@@ -28,6 +28,7 @@ void i2c_init(void)
     SSP1STATbits.CKE = 0; //Disable SMBus inputs
     //SSP1ADD = 29; //400kHz at 48MHz system clock
     SSP1ADD = 119; //100kHz at 48MHz system clock
+    //SSP1ADD = 239; //50kHz at 48MHz system clock
     SSP1CON1bits.WCOL = 0; //Clear write colision bit
     SSP1CON1bits.SSPOV = 0; //Clear receive overflow bit bit
     SSP1CON1bits.SSPM = 0b1000; //I2C master mode
@@ -310,7 +311,7 @@ void i2c_display_init(void)
     DISPLAY_RESET_PIN = 0;
     __delay_ms(10);
     DISPLAY_RESET_PIN = 1;
-    __delay_ms(5);
+    __delay_ms(50);
     
     //Set I2C frequency to 200kHz (display doesn't like 400kHz at startup)
     //i2c_set_frequency(I2C_FREQUENCY_100kHz);

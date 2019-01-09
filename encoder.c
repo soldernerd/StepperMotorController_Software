@@ -214,13 +214,13 @@ void encoder_statemachine(void)
             {
                 //increase position by step size
                 if(!os.busy)
-                    motor_schedule_command(MOTOR_DIRECTION_CW, os.setup_step_size, 0);
+                    motor_schedule_command(MOTOR_DIRECTION_CW, motor_steps_from_degrees(os.setup_step_size), 0);
             }
             if(os.encoder2Count<0)
             {
                 //decrease position by step size
                 if(!os.busy)
-                    motor_schedule_command(MOTOR_DIRECTION_CCW, os.setup_step_size, 0);
+                    motor_schedule_command(MOTOR_DIRECTION_CCW, motor_steps_from_degrees(os.setup_step_size), 0);
             }
             break;
 
