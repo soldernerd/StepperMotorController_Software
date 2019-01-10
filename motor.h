@@ -48,7 +48,7 @@ void startup(void);
 void motor_start(motorDirection_t direction);
 void motor_stop(void);
 void motor_change_speed(uint16_t new_speed);
-uint32_t motor_steps_from_degrees(uint16_t degrees);
+uint32_t motor_nonzero_steps_from_degrees(uint16_t degrees);
 
 //Main tools
 uint8_t motor_schedule_command(motorDirection_t direction, uint32_t distance_in_steps, uint16_t speed);

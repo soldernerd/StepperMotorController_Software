@@ -190,6 +190,7 @@ void encoder_statemachine(void)
                     if(os.button1==1)
                     {
                         os.current_position_in_steps = 0;
+                        os.divide_position = 0;
                         os.displayState = DISPLAY_STATE_SETUP2_CCW;
                     }
                     if(os.encoder1Count>0)
@@ -214,13 +215,13 @@ void encoder_statemachine(void)
             {
                 //increase position by step size
                 if(!os.busy)
-                    motor_schedule_command(MOTOR_DIRECTION_CW, motor_steps_from_degrees(os.setup_step_size), 0);
+                    motor_schedule_command(MOTOR_DIRECTION_CW, motor_nonzero_steps_from_degrees(os.setup_step_size), 0);
             }
             if(os.encoder2Count<0)
             {
                 //decrease position by step size
                 if(!os.busy)
-                    motor_schedule_command(MOTOR_DIRECTION_CCW, motor_steps_from_degrees(os.setup_step_size), 0);
+                    motor_schedule_command(MOTOR_DIRECTION_CCW, motor_nonzero_steps_from_degrees(os.setup_step_size), 0);
             }
             break;
 
@@ -309,13 +310,13 @@ void encoder_statemachine(void)
                 if(os.divide_jump_size>0)
                 {
                     target_divide_position = os.divide_position + os.divide_jump_size;
-                    if(target_divide_position>os.division)
+                    if(target_divide_position>=os.division)
                         target_divide_position -= os.division;
                 }
                 else
                 {
                     target_divide_position = os.divide_position + os.divide_jump_size;
-                    if(target_divide_position>os.division)
+                    if(target_divide_position>=os.division)
                         target_divide_position += os.division;
                 }
 
@@ -325,12 +326,35 @@ void encoder_statemachine(void)
                 tmp /= os.division;
                 target_position_in_steps = (uint32_t) tmp;
                 
-                //Calculate distance to target
+                //Calculate shortest distance to target
                 distance_to_target_in_steps = target_position_in_steps - os.current_position_in_steps;
-                if(distance_to_target_in_steps>(config.full_circle_in_steps>>1))
+                distance_to_target_in_steps += config.full_circle_in_steps; // now it is certainly positive
+                while(distance_to_target_in_steps>((int32_t)(config.full_circle_in_steps>>1)))
+                {
                     distance_to_target_in_steps -= config.full_circle_in_steps;
-                if(distance_to_target_in_steps<-((int32_t)(config.full_circle_in_steps>>1)))
-                    distance_to_target_in_steps += config.full_circle_in_steps;
+                }
+//                if(distance_to_target_in_steps>(config.full_circle_in_steps>>1))
+//                {
+//                    distance_to_target_in_steps -= config.full_circle_in_steps;
+//                }
+//                if((-distance_to_target_in_steps)>((int32_t)(config.full_circle_in_steps>>1)))
+//                {
+//                    distance_to_target_in_steps += config.full_circle_in_steps;
+//                }
+                
+//                //Optimize with respect to overshoot
+//                if(os.approach_direction==MOTOR_DIRECTION_CW)
+//                {
+//                    //Try to move clockwise, i.e. in positive direction
+//                    if((distance_to_target_in_steps+((int32_t)config.full_circle_in_steps))<=((int32_t)config.overshoot_in_steps))
+//                        distance_to_target_in_steps += config.full_circle_in_steps;
+//                }
+//                if(os.approach_direction==MOTOR_DIRECTION_CCW)
+//                {
+//                    //Try to move counter-clockwise, i.e. in negative direction
+//                    if(distance_to_target_in_steps>=((int32_t)(config.full_circle_in_steps-config.overshoot_in_steps)))
+//                        distance_to_target_in_steps -= config.full_circle_in_steps;
+//                }
                 
                 //Run motor
                 if(distance_to_target_in_steps<0)
@@ -498,11 +522,11 @@ void encoder_statemachine(void)
                 {
                     if(os.approach_direction==MOTOR_DIRECTION_CW)
                     {
-                        motor_schedule_command(MOTOR_DIRECTION_CW, ((config.full_circle_in_steps>>1)-os.current_position_in_steps), 0);
+                        motor_schedule_command(MOTOR_DIRECTION_CW, (config.full_circle_in_steps-os.current_position_in_steps), 0);
                     }
                     else
                     {
-                        motor_schedule_command(MOTOR_DIRECTION_CW, ((config.full_circle_in_steps>>1)+config.overshoot_in_steps-os.current_position_in_steps), 0);
+                        motor_schedule_command(MOTOR_DIRECTION_CW, (config.full_circle_in_steps-os.current_position_in_steps+config.overshoot_in_steps), 0);
                         motor_schedule_command(MOTOR_DIRECTION_CCW, config.overshoot_in_steps, 0);
                     }
                 }

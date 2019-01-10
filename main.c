@@ -82,7 +82,7 @@ MAIN_RETURN main(void)
             tmp = (float) os.current_position_in_steps;
             tmp *= 36000;
             tmp /= config.full_circle_in_steps;
-            tmp += 0.5; //Round correctly
+            //tmp += 0.5; //Round correctly
             os.current_position_in_degrees = (uint16_t) tmp;
             if(os.current_position_in_degrees==36000)
             {

@@ -201,7 +201,7 @@ void system_init(void)
     os.busy = 0;
     os.current_position_in_steps = 0;
     os.last_approach_direction = MOTOR_DIRECTION_CW;
-    os.setup_step_size = 100;
+    os.setup_step_size = 1000;
     os.approach_direction = MOTOR_DIRECTION_CW;
     os.division = 36;
     os.divide_step_size = 10;
